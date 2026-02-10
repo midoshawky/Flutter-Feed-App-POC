@@ -1,0 +1,17 @@
+import 'package:uuid/uuid.dart';
+
+class Comment {
+  final String id;
+  final String userId;
+  final String userName;
+  final String text;
+  final DateTime timestamp;
+
+  Comment({
+    String? id,
+    required this.userId,
+    required this.userName,
+    required this.text,
+    required this.timestamp,
+  }) : id = id ?? const Uuid().v4();
+}
