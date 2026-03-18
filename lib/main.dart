@@ -16,12 +16,13 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Feed POC',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        useMaterial3: false,
         brightness: Brightness.light,
         scaffoldBackgroundColor: Colors.white,
         primaryColor: Colors.blue,
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.blue,
-          background: Colors.white,
+          surface: Colors.white,
         ),
         textTheme: GoogleFonts.interTextTheme(Theme.of(context).textTheme),
       ),

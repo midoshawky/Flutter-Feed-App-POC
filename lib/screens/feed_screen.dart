@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/feed_provider.dart';
 import '../widgets/post_card.dart';
+import '../widgets/create_post_card.dart';
 
 class FeedScreen extends ConsumerWidget {
   const FeedScreen({super.key});
@@ -29,10 +30,13 @@ class FeedScreen extends ConsumerWidget {
         child: Container(
           constraints: const BoxConstraints(maxWidth: 600),
           child: ListView.builder(
-            itemCount: posts.length,
+            itemCount: posts.length + 1,
             padding: const EdgeInsets.only(bottom: 24),
             itemBuilder: (context, index) {
-              return PostCard(post: posts[index]);
+              if (index == 0) {
+                return const CreatePostCard();
+              }
+              return PostCard(post: posts[index - 1]);
             },
           ),
         ),

@@ -6,6 +6,8 @@ class Comment {
   final String userName;
   final String text;
   final DateTime timestamp;
+  final List<Comment> replies;
+  final int likesCount;
 
   Comment({
     String? id,
@@ -13,5 +15,22 @@ class Comment {
     required this.userName,
     required this.text,
     required this.timestamp,
+    this.replies = const [],
+    this.likesCount = 0,
   }) : id = id ?? const Uuid().v4();
+
+  Comment copyWith({
+    List<Comment>? replies,
+    int? likesCount,
+  }) {
+    return Comment(
+      id: id,
+      userId: userId,
+      userName: userName,
+      text: text,
+      timestamp: timestamp,
+      replies: replies ?? this.replies,
+      likesCount: likesCount ?? this.likesCount,
+    );
+  }
 }

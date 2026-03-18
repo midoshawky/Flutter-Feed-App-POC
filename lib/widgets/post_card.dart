@@ -5,6 +5,7 @@ import 'post_header.dart';
 import 'post_content.dart';
 import 'post_actions.dart';
 import 'comment_section.dart';
+import 'repost_preview_card.dart';
 
 class PostCard extends StatefulWidget {
   final Post post;
@@ -27,7 +28,7 @@ class _PostCardState extends State<PostCard> {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey[200]!),
+        side: const BorderSide(color: Color(0xFFDEDEDE)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -37,7 +38,20 @@ class _PostCardState extends State<PostCard> {
             if (user != null)
               PostHeader(user: user, timestamp: widget.post.timestamp),
             const SizedBox(height: 12),
-            PostContent(post: widget.post),
+            // Reposter's own added text (if any)
+            if (widget.post.content.isNotEmpty && widget.post.repostedFrom != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  widget.post.content,
+                  style: const TextStyle(fontSize: 15, height: 1.5, color: Color(0xFF1F1F1F)),
+                ),
+              ),
+            // Embedded original post card (repost)
+            if (widget.post.repostedFrom != null)
+              RepostPreviewCard(post: widget.post.repostedFrom!)
+            else
+              PostContent(post: widget.post),
             PostActions(
               post: widget.post,
               onCommentPressed: () {

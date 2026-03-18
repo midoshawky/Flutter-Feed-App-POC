@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/post.dart';
 import '../providers/feed_provider.dart';
+import 'repost_dialog.dart';
 
 class PostActions extends ConsumerWidget {
   final Post post;
@@ -18,41 +19,34 @@ class PostActions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
-        const Divider(),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _ActionButton(
-                icon: post.isLiked ? Icons.favorite : Icons.favorite_border,
-                label: 'Like',
-                count: post.likesCount,
-                color: post.isLiked ? Colors.red : Colors.grey[700],
-                onTap: () =>
-                    ref.read(feedProvider.notifier).toggleLike(post.id),
-              ),
-              _ActionButton(
-                icon: Icons.chat_bubble_outline,
-                label: 'Comment',
-                count: post.comments.length,
-                color: Colors.grey[700],
-                onTap: onCommentPressed,
-              ),
-              _ActionButton(
-                icon: Icons.share_outlined,
-                label: 'Share',
-                color: Colors.grey[700],
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Share functionality mocked!'),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: Divider(color: Color(0xFFDEDEDE), thickness: 1, height: 1),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            _ActionButton(
+              icon: Icons.chat_bubble_outline,
+              count: post.comments.length,
+              color: const Color(0xFF1F1F1F),
+              onTap: onCommentPressed,
+            ),
+            const SizedBox(width: 24),
+            _ActionButton(
+              icon: post.isLiked ? Icons.favorite : Icons.favorite_border,
+              count: post.likesCount,
+              color: post.isLiked ? const Color(0xFFF64C4C) : const Color(0xFF1F1F1F),
+              onTap: () => ref.read(feedProvider.notifier).toggleLike(post.id),
+            ),
+            const SizedBox(width: 24),
+            _ActionButton(
+              icon: Icons.repeat,
+              count: post.repostsCount,
+              color: const Color(0xFF333333),
+              onTap: () => showRepostDialog(context, ref, post),
+            ),
+          ],
         ),
       ],
     );
@@ -61,16 +55,14 @@ class PostActions extends ConsumerWidget {
 
 class _ActionButton extends StatelessWidget {
   final IconData icon;
-  final String label;
-  final Color? color;
-  final int? count;
+  final Color color;
+  final int count;
   final VoidCallback onTap;
 
   const _ActionButton({
     required this.icon,
-    required this.label,
-    this.color,
-    this.count,
+    required this.color,
+    required this.count,
     required this.onTap,
   });
 
@@ -78,19 +70,22 @@ class _ActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(width: 6),
+            Icon(icon, size: 24, color: color),
+            const SizedBox(width: 4),
             Text(
-              count != null ? '$count' : label,
+              '$count',
               style: GoogleFonts.inter(
-                fontSize: 14,
+                fontSize: 16,
                 color: color,
-                fontWeight: count != null ? FontWeight.bold : FontWeight.normal,
+                fontWeight: FontWeight.normal,
               ),
             ),
           ],
