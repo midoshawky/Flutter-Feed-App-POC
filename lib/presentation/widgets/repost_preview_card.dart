@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_feed_poc/models/post.dart';
+import 'package:flutter_feed_poc/services/mock_data_service.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/post.dart';
-import '../services/mock_data_service.dart';
 import 'post_media.dart';
 import 'user_avatar.dart';
 

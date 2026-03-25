@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/post.dart';
+import '../../models/post.dart';
 import 'post_media.dart';
 
 class PostContent extends StatelessWidget {

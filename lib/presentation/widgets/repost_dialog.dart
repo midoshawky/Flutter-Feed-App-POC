@@ -2,35 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertagger/fluttertagger.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/post.dart';
-import '../providers/feed_provider.dart';
-import '../services/mock_data_service.dart';
+import '../../models/post.dart';
+import '../../domain/entities/post_entity.dart';
+import '../providers/di_providers.dart';
+import '../../services/mock_data_service.dart';
 import 'repost_preview_card.dart';
 import 'user_avatar.dart';
 
-/// Shows the repost dialog, allowing the user to add text and then repost.
 void showRepostDialog(BuildContext context, WidgetRef ref, Post post) {
   showDialog(
     context: context,
-    builder: (ctx) => _RepostDialog(post: post, ref: ref),
+    builder: (ctx) => _RepostDialog(post: post),
   );
 }
 
-class _RepostDialog extends StatefulWidget {
+class _RepostDialog extends ConsumerStatefulWidget {
   final Post post;
-  final WidgetRef ref;
 
-  const _RepostDialog({required this.post, required this.ref});
+  const _RepostDialog({required this.post});
 
   @override
-  State<_RepostDialog> createState() => _RepostDialogState();
+  ConsumerState<_RepostDialog> createState() => _RepostDialogState();
 }
 
-class _RepostDialogState extends State<_RepostDialog> {
+class _RepostDialogState extends ConsumerState<_RepostDialog> {
   late final FlutterTaggerController _controller;
   final List<String> _tags = ['flutter', 'design', 'development', 'ui', 'dart'];
   List<String> _filteredTags = [];
   bool _isSearching = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -57,17 +57,38 @@ class _RepostDialogState extends State<_RepostDialog> {
 
   void _hideOverlay() => setState(() => _isSearching = false);
 
-  void _submit() {
-    widget.ref.read(feedProvider.notifier).repost(
-          widget.post,
-          _controller.text.trim(),
+  Future<void> _submit() async {
+    setState(() => _isLoading = true);
+    try {
+      await ref.read(repostUseCaseProvider).call(
+            byUserId: '2', // Sara Hany
+            originalPostId: widget.post.id,
+            addedText: _controller.text.trim(),
+            originalPost: PostEntity(
+              id: widget.post.id,
+              userId: widget.post.userId,
+              content: widget.post.content,
+              imageUrl: widget.post.imageUrl,
+              mediaUrls: widget.post.mediaUrls,
+              tags: widget.post.tags,
+              type: PostTypeEntity.values[widget.post.type.index],
+              timestamp: widget.post.timestamp,
+            ),
+          );
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error reposting: $e')),
         );
-    Navigator.of(context).pop();
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = MockDataService.users[0];
+    final currentUser = MockDataService.users[1]; // Sara Hany
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -79,7 +100,6 @@ class _RepostDialogState extends State<_RepostDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Dialog header ─────────────────────────────────────────────
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -101,6 +121,7 @@ class _RepostDialogState extends State<_RepostDialog> {
                         key: textFieldKey,
                         controller: _controller,
                         maxLines: null,
+                        enabled: !_isLoading,
                         onChanged: (v) => setState(() {}),
                         decoration: InputDecoration(
                           hintText: 'Add details to your post',
@@ -121,14 +142,14 @@ class _RepostDialogState extends State<_RepostDialog> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: const Icon(Icons.close, color: Color(0xFF787878)),
-                ),
+                if (!_isLoading)
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: const Icon(Icons.close, color: Color(0xFF787878)),
+                  ),
               ],
             ),
 
-            // ── Inline tag suggestions ────────────────────────────────────
             if (_isSearching && _filteredTags.isNotEmpty) ...[
               const SizedBox(height: 8),
               Container(
@@ -182,20 +203,16 @@ class _RepostDialogState extends State<_RepostDialog> {
             ],
 
             const SizedBox(height: 16),
-
-            // ── Quoted original post preview ──────────────────────────────
             RepostPreviewCard(post: widget.post),
-
             const SizedBox(height: 20),
-
-            // ── Repost button ─────────────────────────────────────────────
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton(
-                onPressed: _submit,
+                onPressed: _isLoading ? null : _submit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4535C1),
                   foregroundColor: Colors.white,
+                  disabledBackgroundColor: const Color(0xFFB3ADEC),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(100),
                   ),
@@ -203,13 +220,22 @@ class _RepostDialogState extends State<_RepostDialog> {
                       horizontal: 32, vertical: 14),
                   elevation: 0,
                 ),
-                child: Text(
-                  'Repost',
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                        ),
+                      )
+                    : Text(
+                        'Repost',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
               ),
             ),
           ],

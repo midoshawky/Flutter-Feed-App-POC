@@ -1,22 +1,26 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fluttertagger/fluttertagger.dart';
 import 'package:image_picker/image_picker.dart';
-import '../services/mock_data_service.dart';
+import '../../domain/entities/post_entity.dart';
+import '../providers/di_providers.dart';
+import '../../services/mock_data_service.dart';
 import 'user_avatar.dart';
 
-class CreatePostCard extends StatefulWidget {
+class CreatePostCard extends ConsumerStatefulWidget {
   const CreatePostCard({super.key});
 
   @override
-  State<CreatePostCard> createState() => _CreatePostCardState();
+  ConsumerState<CreatePostCard> createState() => _CreatePostCardState();
 }
 
-class _CreatePostCardState extends State<CreatePostCard> {
+class _CreatePostCardState extends ConsumerState<CreatePostCard> {
   late final FlutterTaggerController _controller;
   final int _maxLength = 2000;
   final ImagePicker _picker = ImagePicker();
+  bool _isLoading = false;
 
   // Picked images as bytes (works on all platforms including web)
   final List<Uint8List> _attachedMedia = [];
@@ -79,9 +83,49 @@ class _CreatePostCardState extends State<CreatePostCard> {
     });
   }
 
+  Future<void> _handlePost() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty && _attachedMedia.isEmpty) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final tags = _controller.tags.map((t) => '#${t.text}').toList();
+      
+      await ref.read(createPostUseCaseProvider).call(
+        userId: '2', // Mocking current user as 'Sara Hany' (id: 2) for now
+        content: text,
+        type: _attachedMedia.isEmpty 
+            ? PostTypeEntity.text 
+            : _attachedMedia.length == 1 
+                ? PostTypeEntity.image 
+                : PostTypeEntity.multiImage,
+        tags: tags,
+        mediaBytes: _attachedMedia,
+      );
+
+      // Success: Reset state
+      _controller.clear();
+      _attachedMedia.clear();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Post shared!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final currentUser = MockDataService.users[0]; // the logged in user
+    final currentUser = MockDataService.users[1]; // Using Sara Hany for demo
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
@@ -114,7 +158,6 @@ class _CreatePostCardState extends State<CreatePostCard> {
                     FlutterTagger(
                       controller: _controller,
                       onSearch: _onSearch,
-                      // Hand over a no-op overlay — we render suggestions ourselves
                       overlay: const SizedBox.shrink(),
                       triggerCharacterAndStyles: const {
                         '#': TextStyle(
@@ -127,6 +170,7 @@ class _CreatePostCardState extends State<CreatePostCard> {
                           key: textFieldKey,
                           controller: _controller,
                           maxLines: null,
+                          enabled: !_isLoading,
                           onChanged: (val) => setState(() {}),
                           maxLength: _maxLength,
                           buildCounter: (context,
@@ -167,7 +211,7 @@ class _CreatePostCardState extends State<CreatePostCard> {
             ],
           ),
 
-          // ── Inline tag suggestions (shown below text field row) ───────────
+          // ── Inline tag suggestions ───────────────────────────────────────
           if (_isSearching && _filteredTags.isNotEmpty) ...[
             const SizedBox(height: 8),
             Container(
@@ -256,7 +300,7 @@ class _CreatePostCardState extends State<CreatePostCard> {
                         top: 8,
                         right: 8,
                         child: GestureDetector(
-                          onTap: () => _removeMedia(index),
+                          onTap: _isLoading ? null : () => _removeMedia(index),
                           child: Container(
                             width: 24,
                             height: 24,
@@ -281,7 +325,7 @@ class _CreatePostCardState extends State<CreatePostCard> {
           Row(
             children: [
               IconButton(
-                onPressed: _pickImages,
+                onPressed: _isLoading ? null : _pickImages,
                 icon: const Icon(Icons.image_outlined,
                     color: Color(0xFF333333)),
                 padding: EdgeInsets.zero,
@@ -290,10 +334,11 @@ class _CreatePostCardState extends State<CreatePostCard> {
               ),
               const Spacer(),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: _isLoading ? null : _handlePost,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4535C1),
                   foregroundColor: const Color(0xFFF5F5F5),
+                  disabledBackgroundColor: const Color(0xFFB3ADEC),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -301,13 +346,22 @@ class _CreatePostCardState extends State<CreatePostCard> {
                       horizontal: 32, vertical: 12),
                   elevation: 0,
                 ),
-                child: Text(
-                  'Post',
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                        ),
+                      )
+                    : Text(
+                        'Post',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
               ),
             ],
           ),

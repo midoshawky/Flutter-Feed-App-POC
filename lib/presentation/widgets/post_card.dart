@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/post.dart';
-import '../services/mock_data_service.dart';
+import '../../models/post.dart';
+import '../../services/mock_data_service.dart';
 import 'post_header.dart';
 import 'post_content.dart';
 import 'post_actions.dart';

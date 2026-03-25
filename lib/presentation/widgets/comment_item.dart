@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/comment.dart';
-import '../providers/feed_provider.dart';
-import '../services/mock_data_service.dart';
+import '../../models/comment.dart';
+import '../../domain/entities/comment_entity.dart';
+import '../providers/di_providers.dart';
+import '../../services/mock_data_service.dart';
 import 'user_avatar.dart';
 
 class CommentItem extends ConsumerStatefulWidget {
@@ -47,29 +48,40 @@ class _CommentItemState extends ConsumerState<CommentItem> {
     return 'now';
   }
 
-  void _submitReply() {
+  Future<void> _submitReply() async {
     final text = _replyController.text.trim();
     if (text.isEmpty) return;
 
-    final currentUser = MockDataService.users[0];
-    final reply = Comment(
+    final currentUser = MockDataService.users[1]; // Sara Hany
+    final reply = CommentEntity(
+      id: '', // Firestore will generate
       userId: currentUser.id,
       userName: currentUser.name,
       text: text,
       timestamp: DateTime.now(),
     );
 
-    ref.read(feedProvider.notifier).addReply(
-          widget.postId,
-          widget.parentCommentId,
-          reply,
-        );
+    try {
+      await ref.read(addReplyUseCaseProvider).call(
+            postId: widget.postId,
+            parentCommentId: widget.parentCommentId,
+            reply: reply,
+          );
 
-    _replyController.clear();
-    setState(() {
-      _showReplyInput = false;
-      _showReplies = true; // auto-expand to show the new reply
-    });
+      _replyController.clear();
+      if (mounted) {
+        setState(() {
+          _showReplyInput = false;
+          _showReplies = true; // auto-expand to show the new reply
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error replying: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -77,7 +89,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
     final user = MockDataService.getUserById(widget.comment.userId);
     final avatarUrl = user?.avatarUrl ?? 'https://i.pravatar.cc/150';
     final handle = user?.username ?? '@user';
-    final currentUser = MockDataService.users[0];
+    final currentUser = MockDataService.users[1]; // Sara Hany
 
     return Padding(
       padding: EdgeInsets.only(top: 16, left: widget.isReply ? 48 : 0),

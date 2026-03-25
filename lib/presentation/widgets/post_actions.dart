@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/post.dart';
-import '../providers/feed_provider.dart';
+import '../../models/post.dart';
+import '../providers/di_providers.dart';
 import 'repost_dialog.dart';
 
 class PostActions extends ConsumerWidget {
@@ -37,7 +37,7 @@ class PostActions extends ConsumerWidget {
               icon: post.isLiked ? Icons.favorite : Icons.favorite_border,
               count: post.likesCount,
               color: post.isLiked ? const Color(0xFFF64C4C) : const Color(0xFF1F1F1F),
-              onTap: () => ref.read(feedProvider.notifier).toggleLike(post.id),
+              onTap: () => ref.read(toggleLikeUseCaseProvider).call(post.id, post.isLiked),
             ),
             const SizedBox(width: 24),
             _ActionButton(

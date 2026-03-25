@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/post.dart';
-import '../models/comment.dart';
-import '../providers/feed_provider.dart';
-import '../services/mock_data_service.dart';
+import '../../models/post.dart';
+import '../../domain/entities/comment_entity.dart';
+import '../providers/di_providers.dart';
+import '../../services/mock_data_service.dart';
 import 'user_avatar.dart';
 
 class CommentInput extends ConsumerStatefulWidget {
@@ -25,23 +25,33 @@ class _CommentInputState extends ConsumerState<CommentInput> {
     super.dispose();
   }
 
-  void _submitComment() {
-    if (_commentController.text.trim().isEmpty) return;
+  Future<void> _submitComment() async {
+    final text = _commentController.text.trim();
+    if (text.isEmpty) return;
 
-    final comment = Comment(
-      userId: '1', 
-      userName: MockDataService.users[0].name,
-      text: _commentController.text.trim(),
+    final comment = CommentEntity(
+      id: '', // Firestore will generate
+      userId: '2', // Sara Hany
+      userName: MockDataService.users[1].name,
+      text: text,
       timestamp: DateTime.now(),
     );
 
-    ref.read(feedProvider.notifier).addComment(widget.post.id, comment);
-    _commentController.clear();
+    try {
+      await ref.read(addCommentUseCaseProvider).call(widget.post.id, comment);
+      _commentController.clear();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error adding comment: $e')),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = MockDataService.users[0]; // Current user mock
+    final user = MockDataService.users[1]; // Sara Hany
 
     return Row(
       children: [

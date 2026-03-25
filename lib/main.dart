@@ -1,9 +1,21 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'screens/feed_screen.dart';
+import 'firebase_options.dart';
+import 'presentation/screens/feed_screen.dart';
+import 'services/firestore_seed_service.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Seed Firestore with mock data on first run (debug builds only)
+  if (kDebugMode) {
+    await FirestoreSeedService().seedIfNeeded();
+  }
+
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -18,10 +30,10 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: false,
         brightness: Brightness.light,
-        scaffoldBackgroundColor: Colors.white,
-        primaryColor: Colors.blue,
+        scaffoldBackgroundColor: const Color(0xFFF7F7F7),
+        primaryColor: const Color(0xFF4535C1),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
+          seedColor: const Color(0xFF4535C1),
           surface: Colors.white,
         ),
         textTheme: GoogleFonts.interTextTheme(Theme.of(context).textTheme),
