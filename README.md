@@ -1,17 +1,32 @@
-# flutter_feed_poc
+# feed_module
 
-A new Flutter project.
+A reusable Flutter package for a social feed with Firestore integration and optimistic UI updates.
 
-## Getting Started
+## Features
+- **Firestore Integration**: Out-of-the-box support for fetching and updating posts.
+- **Optimistic UI**: No-latency feedback for likes, comments, and reshares.
+- **Seeding Service**: Easy dummy data generation for development.
 
-This project is a starting point for a Flutter application.
+## Installation
 
-A few resources to get you started if this is your first Flutter project:
+Add it to your `pubspec.yaml`:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+```yaml
+dependencies:
+  feed_module:
+    git:
+      url: https://github.com/midoshawky/Flutter-Feed-App-POC.git
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-# Flutter-Feed-App-POC
+## Usage
+
+```dart
+import 'package:feed_module/feed_module.dart';
+
+// ...
+home: const FeedScreen(),
+```
+
+## Example
+
+See the `example/` directory for a full demonstration application.
