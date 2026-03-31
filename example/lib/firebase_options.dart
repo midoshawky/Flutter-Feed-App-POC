@@ -21,9 +21,15 @@ class DefaultFirebaseOptions {
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        return android;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for android - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.iOS:
-        return ios;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for ios - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.macOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for macos - '
@@ -47,28 +53,11 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDmyUZEmuN8fkFZTxGm_3NCFMrSEU2hcuY',
-    appId: '1:723214011157:web:91d72a1ee0bb017099371c',
-    messagingSenderId: '723214011157',
-    projectId: 'pomac-shuwier-dev',
-    authDomain: 'pomac-shuwier-dev.firebaseapp.com',
-    storageBucket: 'pomac-shuwier-dev.firebasestorage.app',
-  );
-
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCqE_vYp8Nn1MpMLl_mks7iHodzEuPBFX4',
-    appId: '1:723214011157:android:ed09b227f4a6192899371c',
-    messagingSenderId: '723214011157',
-    projectId: 'pomac-shuwier-dev',
-    storageBucket: 'pomac-shuwier-dev.firebasestorage.app',
-  );
-
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAjb9ftmcCSoXIfH5g5Un3ZXoQl1UDe0dY',
-    appId: '1:723214011157:ios:6724059ee8c7df8799371c',
-    messagingSenderId: '723214011157',
-    projectId: 'pomac-shuwier-dev',
-    storageBucket: 'pomac-shuwier-dev.firebasestorage.app',
-    iosBundleId: 'com.pomac.feed',
+    apiKey: 'AIzaSyBv0MKBdAhjG7dCxKgREGGMaiIiNPHUnc4',
+    appId: '1:272051353377:web:0852835de00fe21d1db060',
+    messagingSenderId: '272051353377',
+    projectId: 'shuwier-58a6c',
+    authDomain: 'shuwier-58a6c.firebaseapp.com',
+    storageBucket: 'shuwier-58a6c.firebasestorage.app',
   );
 }
