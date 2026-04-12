@@ -28,9 +28,10 @@ class _ShimmerBoxState extends State<_ShimmerBox>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
-    _anim = Tween<double>(begin: 0.4, end: 1.0).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+    _anim = Tween<double>(
+      begin: 0.4,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -80,7 +81,7 @@ class PostCardSkeleton extends StatelessWidget {
             color: Color.fromRGBO(0, 0, 0, 0.06),
             blurRadius: 49,
             spreadRadius: -22,
-          )
+          ),
         ],
       ),
       child: Column(
@@ -102,24 +103,34 @@ class PostCardSkeleton extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           // ── Text bars ────────────────────────────────────────────────────
-          const _ShimmerBox(width: double.infinity, height: 12, borderRadius: 16),
+          const _ShimmerBox(
+            width: double.infinity,
+            height: 12,
+            borderRadius: 16,
+          ),
           const SizedBox(height: 8),
           const _ShimmerBox(width: 345, height: 12, borderRadius: 16),
           const SizedBox(height: 16),
           // ── Image placeholder ─────────────────────────────────────────────
           const _ShimmerBox(
-              width: double.infinity, height: 328, borderRadius: 16),
+            width: double.infinity,
+            height: 328,
+            borderRadius: 16,
+          ),
           const SizedBox(height: 16),
           // ── Action bar: 3× (circle + small bar) ──────────────────────────
           const Divider(color: Color(0xFFDEDEDE), thickness: 1, height: 1),
           const SizedBox(height: 8),
           Row(
-            children: List.generate(3, (i) => [
-              const _ShimmerBox(width: 24, height: 24, borderRadius: 100),
-              const SizedBox(width: 8),
-              const _ShimmerBox(width: 30, height: 8, borderRadius: 16),
-              if (i < 2) const SizedBox(width: 24),
-            ]).expand((e) => e).toList(),
+            children: List.generate(
+              3,
+              (i) => [
+                const _ShimmerBox(width: 24, height: 24, borderRadius: 100),
+                const SizedBox(width: 8),
+                const _ShimmerBox(width: 30, height: 8, borderRadius: 16),
+                if (i < 2) const SizedBox(width: 24),
+              ],
+            ).expand((e) => e).toList(),
           ),
         ],
       ),

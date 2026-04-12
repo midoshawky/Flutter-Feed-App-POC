@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:feed_module/src/utils/responsive_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -91,32 +92,34 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
 
     try {
       final tags = _controller.tags.map((t) => '#${t.text}').toList();
-      
-      await ref.read(createPostUseCaseProvider).call(
-        userId: '2', // Mocking current user as 'Sara Hany' (id: 2) for now
-        content: text,
-        type: _attachedMedia.isEmpty 
-            ? PostTypeEntity.text 
-            : _attachedMedia.length == 1 
-                ? PostTypeEntity.image 
+
+      await ref
+          .read(createPostUseCaseProvider)
+          .call(
+            userId: '2', // Mocking current user as 'Sara Hany' (id: 2) for now
+            content: text,
+            type: _attachedMedia.isEmpty
+                ? PostTypeEntity.text
+                : _attachedMedia.length == 1
+                ? PostTypeEntity.image
                 : PostTypeEntity.multiImage,
-        tags: tags,
-        mediaBytes: _attachedMedia,
-      );
+            tags: tags,
+            mediaBytes: _attachedMedia,
+          );
 
       // Success: Reset state
       _controller.clear();
       _attachedMedia.clear();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Post shared!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Post shared!')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -127,89 +130,108 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
   Widget build(BuildContext context) {
     final currentUser = MockDataService.users[1]; // Using Sara Hany for demo
 
+    final isMobile = ResponsiveLayout.isMobile(context);
+
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-      padding: const EdgeInsets.all(24),
+      margin: isMobile
+          ? const EdgeInsets.symmetric(horizontal: 0, vertical: 16)
+          : const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 16 : 24,
+        vertical: isMobile ? 16 : 24,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: const Color(0xFFDEDEDE)),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color.fromRGBO(0, 0, 0, 0.16),
-            blurRadius: 49,
-            spreadRadius: -22,
-          ),
-        ],
+        border: isMobile ? null : Border.all(color: const Color(0xFFDEDEDE)),
+        borderRadius: isMobile ? BorderRadius.zero : BorderRadius.circular(16),
+        boxShadow: isMobile
+            ? null
+            : const [
+                BoxShadow(
+                  color: Color.fromRGBO(0, 0, 0, 0.16),
+                  blurRadius: 49,
+                  spreadRadius: -22,
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Header row: avatar + text field ──────────────────────────────
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              UserAvatar(url: currentUser.avatarUrl),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    FlutterTagger(
-                      controller: _controller,
-                      onSearch: _onSearch,
-                      overlay: const SizedBox.shrink(),
-                      triggerCharacterAndStyles: const {
-                        '#': TextStyle(
-                          color: Color(0xFF4535C1),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      },
-                      builder: (context, textFieldKey) {
-                        return TextField(
-                          key: textFieldKey,
-                          controller: _controller,
-                          maxLines: null,
-                          enabled: !_isLoading,
-                          onChanged: (val) => setState(() {}),
-                          maxLength: _maxLength,
-                          buildCounter: (context,
-                                  {required currentLength,
-                                  required isFocused,
-                                  maxLength}) =>
-                              null,
-                          decoration: InputDecoration(
-                            hintText:
-                                "What are you working on, ${currentUser.name.split(' ')[0]}?",
-                            hintStyle: GoogleFonts.inter(
-                              fontSize: 20,
-                              color: const Color(0xFF787878),
-                            ),
-                            border: InputBorder.none,
-                            isDense: true,
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                          style: GoogleFonts.inter(
-                            fontSize: 20,
-                            color: const Color(0xFF1F1F1F),
-                            height: 1.5,
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${_maxLength - _controller.text.length} characters left',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: const Color(0xFF787878),
-                      ),
-                    ),
-                  ],
+          Builder(builder: (context) {
+            final taggerChild = FlutterTagger(
+              controller: _controller,
+              onSearch: _onSearch,
+              overlay: const SizedBox.shrink(),
+              triggerCharacterAndStyles: const {
+                '#': TextStyle(
+                  color: Color(0xFF4535C1),
+                  fontWeight: FontWeight.w500,
                 ),
-              ),
-            ],
-          ),
+              },
+              builder: (context, textFieldKey) {
+                return TextField(
+                  key: textFieldKey,
+                  controller: _controller,
+                  maxLines: null,
+                  expands: isMobile,
+                  textAlignVertical: TextAlignVertical.top,
+                  enabled: !_isLoading,
+                  onChanged: (val) => setState(() {}),
+                  maxLength: _maxLength,
+                  buildCounter: (
+                    context, {
+                    required currentLength,
+                    required isFocused,
+                    maxLength,
+                  }) =>
+                      null,
+                  decoration: InputDecoration(
+                    hintText:
+                        "What are you working on, ${currentUser.name.split(' ')[0]}?",
+                    hintStyle: GoogleFonts.inter(
+                      fontSize: 20,
+                      color: const Color(0xFF787878),
+                    ),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  style: GoogleFonts.inter(
+                    fontSize: 20,
+                    color: const Color(0xFF1F1F1F),
+                    height: 1.5,
+                  ),
+                );
+              },
+            );
+
+            final rowChild = Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                UserAvatar(url: currentUser.avatarUrl),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (isMobile) Expanded(child: taggerChild) else taggerChild,
+                      const SizedBox(height: 4),
+                      Text(
+                        '${_maxLength - _controller.text.length} characters left',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          color: const Color(0xFF787878),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+
+            return isMobile ? Expanded(child: rowChild) : rowChild;
+          }),
 
           // ── Inline tag suggestions ───────────────────────────────────────
           if (_isSearching && _filteredTags.isNotEmpty) ...[
@@ -241,11 +263,16 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
                     },
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10),
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
                       child: Row(
                         children: [
-                          const Icon(Icons.tag,
-                              size: 16, color: Color(0xFF4535C1)),
+                          const Icon(
+                            Icons.tag,
+                            size: 16,
+                            color: Color(0xFF4535C1),
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             '#$tag',
@@ -308,8 +335,11 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
                               color: Color(0xFF343434),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.close,
-                                size: 14, color: Colors.white),
+                            child: const Icon(
+                              Icons.close,
+                              size: 14,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
@@ -321,13 +351,19 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
           ],
 
           // ── Bottom action bar ─────────────────────────────────────────────
+          if (isMobile) ...[
+            const SizedBox(height: 16),
+            const Divider(color: Color(0xFFDEDEDE), thickness: 1, height: 1),
+          ],
           const SizedBox(height: 16),
           Row(
             children: [
               IconButton(
                 onPressed: _isLoading ? null : _pickImages,
-                icon: const Icon(Icons.image_outlined,
-                    color: Color(0xFF333333)),
+                icon: const Icon(
+                  Icons.image_outlined,
+                  color: Color(0xFF333333),
+                ),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
                 tooltip: 'Pick images',
@@ -343,7 +379,9 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 32, vertical: 12),
+                    horizontal: 32,
+                    vertical: 12,
+                  ),
                   elevation: 0,
                 ),
                 child: _isLoading

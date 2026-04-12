@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/post.dart';
 import '../providers/optimistic_feed_provider.dart';
@@ -27,21 +28,39 @@ class PostActions extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             _ActionButton(
-              icon: Icons.chat_bubble_outline,
+              icon: SvgPicture.asset(
+                "assets/icons/comment.svg",
+                package: 'feed_module',
+              ),
               count: post.comments.length,
               color: const Color(0xFF1F1F1F),
               onTap: onCommentPressed,
             ),
             const SizedBox(width: 24),
             _ActionButton(
-              icon: post.isLiked ? Icons.favorite : Icons.favorite_border,
+              icon: post.isLiked
+                  ? SvgPicture.asset(
+                      "assets/icons/heart_like_filled.svg",
+                      package: 'feed_module',
+                    )
+                  : SvgPicture.asset(
+                      "assets/icons/heart_like.svg",
+                      package: 'feed_module',
+                    ),
               count: post.likesCount,
-              color: post.isLiked ? const Color(0xFFF64C4C) : const Color(0xFF1F1F1F),
-              onTap: () => ref.read(optimisticFeedProvider.notifier).toggleLike(post.id, post.isLiked),
+              color: post.isLiked
+                  ? const Color(0xFFF64C4C)
+                  : const Color(0xFF1F1F1F),
+              onTap: () => ref
+                  .read(optimisticFeedProvider.notifier)
+                  .toggleLike(post.id, post.isLiked),
             ),
             const SizedBox(width: 24),
             _ActionButton(
-              icon: Icons.repeat,
+              icon: SvgPicture.asset(
+                "assets/icons/repost.svg",
+                package: 'feed_module',
+              ),
               count: post.repostsCount,
               color: const Color(0xFF333333),
               onTap: () => showRepostDialog(context, ref, post),
@@ -54,7 +73,7 @@ class PostActions extends ConsumerWidget {
 }
 
 class _ActionButton extends StatelessWidget {
-  final IconData icon;
+  final Widget icon;
   final Color color;
   final int count;
   final VoidCallback onTap;
@@ -73,12 +92,10 @@ class _ActionButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
         child: Row(
           children: [
-            Icon(icon, size: 24, color: color),
+            icon,
             const SizedBox(width: 4),
             Text(
               '$count',

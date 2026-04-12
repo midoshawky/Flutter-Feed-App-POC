@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/user.dart';
+import '../../utils/responsive_layout.dart';
 import 'user_avatar.dart';
 
 class PostHeader extends StatelessWidget {
@@ -19,14 +21,43 @@ class PostHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = ResponsiveLayout.isMobile(context);
+
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        UserAvatar(url: user.avatarUrl),
-        const SizedBox(width: 8),
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            UserAvatar(url: user.avatarUrl),
+            if (isMobile)
+              Positioned(
+                bottom: 0,
+                right: -4,
+                child: GestureDetector(
+                  onTap: () {}, // TODO: follow logic
+                  child: Container(
+                    width: 20,
+                    height: 20,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF4535C1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.add,
+                      color: Colors.white,
+                      size: 14,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Row(
                 children: [
@@ -41,7 +72,9 @@ class PostHeader extends StatelessWidget {
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
-                      '${user.username} • ${_getTimeAgo(timestamp)}',
+                      isMobile 
+                          ? '• ${_getTimeAgo(timestamp)}'
+                          : '${user.username} • ${_getTimeAgo(timestamp)}',
                       style: GoogleFonts.inter(
                         color: const Color(0xFF787878),
                         fontSize: 14,
@@ -51,25 +84,102 @@ class PostHeader extends StatelessWidget {
                   ),
                 ],
               ),
+              if (isMobile)
+                const SizedBox(height: 2),
+              if (isMobile)
+                Text(
+                  user.username,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF787878),
+                    fontSize: 14,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
             ],
           ),
         ),
-        TextButton.icon(
-          onPressed: () {},
-          icon: const Icon(Icons.add_circle, color: Color(0xFF4535C1), size: 16),
-          label: Text(
-            'Follow',
-            style: GoogleFonts.inter(
-              color: const Color(0xFF4535C1),
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!isMobile)
+              TextButton.icon(
+                onPressed: () {},
+                icon: const Icon(
+                  Icons.add_rounded,
+                  color: Color(0xFF4535C1),
+                  size: 20,
+                ),
+                label: Text(
+                  'Follow',
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF4535C1),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 0),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_horiz, color: Color(0xFF787878)),
+              padding: EdgeInsets.zero,
+              position: PopupMenuPosition.under,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              onSelected: (value) {
+                // TODO: Handle copy link and report
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'copy',
+                  child: Row(
+                    children: [
+                      SvgPicture.asset(
+                        'assets/icons/copy.svg',
+                        package: 'feed_module',
+                        width: 20,
+                        height: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Copy link',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          color: const Color(0xFF1F1F1F),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'report',
+                  child: Row(
+                    children: [
+                      SvgPicture.asset(
+                        'assets/icons/report.svg',
+                        package: 'feed_module',
+                        width: 20,
+                        height: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Report',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          color: const Color(0xFF1F1F1F),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ),
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
+          ],
         ),
       ],
     );

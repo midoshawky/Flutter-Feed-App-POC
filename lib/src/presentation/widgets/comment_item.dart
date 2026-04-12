@@ -5,6 +5,7 @@ import '../../models/comment.dart';
 import '../../domain/entities/comment_entity.dart';
 import '../providers/optimistic_feed_provider.dart';
 import '../../services/mock_data_service.dart';
+import '../../utils/responsive_layout.dart';
 import 'user_avatar.dart';
 
 class CommentItem extends ConsumerStatefulWidget {
@@ -14,6 +15,7 @@ class CommentItem extends ConsumerStatefulWidget {
   final String postId;
   /// ID of the direct parent comment (for nested replies, this is the top-level comment ID)
   final String parentCommentId;
+  final void Function(Comment replyTarget, String topLevelCommentId)? onReplyTap;
 
   const CommentItem({
     super.key,
@@ -21,6 +23,7 @@ class CommentItem extends ConsumerStatefulWidget {
     required this.postId,
     required this.parentCommentId,
     this.isReply = false,
+    this.onReplyTap,
   });
 
   @override
@@ -148,11 +151,17 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                     // Reply tap
                     GestureDetector(
                       onTap: () {
-                        setState(() {
-                          _showReplyInput = !_showReplyInput;
-                        });
-                        if (_showReplyInput) {
-                          Future.microtask(() => _replyFocus.requestFocus());
+                        if (ResponsiveLayout.isMobile(context)) {
+                          if (widget.onReplyTap != null) {
+                            widget.onReplyTap!(widget.comment, widget.parentCommentId);
+                          }
+                        } else {
+                          setState(() {
+                            _showReplyInput = !_showReplyInput;
+                          });
+                          if (_showReplyInput) {
+                            Future.microtask(() => _replyFocus.requestFocus());
+                          }
                         }
                       },
                       child: Text(
@@ -262,6 +271,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                 // so the provider can find the correct parent.
                 parentCommentId: widget.parentCommentId,
                 isReply: true,
+                onReplyTap: widget.onReplyTap,
               ),
             ),
         ],
