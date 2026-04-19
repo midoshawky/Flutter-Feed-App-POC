@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import '../../models/comment.dart';
 import '../../models/post.dart';
 import '../../services/mock_data_service.dart';
@@ -65,30 +66,56 @@ class _PostCardState extends State<PostCard> {
                           color: Color(0xFF1F1F1F),
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
-                      ),
+                      if (widget.post.comments.isNotEmpty)
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
                     ],
                   ),
                 ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    controller: scrollController,
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    child: CommentSection(
-                      post: widget.post,
-                      onReplyTap: (replyTarget, topLevelId) {
-                        setSheetState(() {
-                          replyingTo = replyTarget;
-                          topLevelCommentId = topLevelId;
-                        });
-                      },
+                if (widget.post.comments.isEmpty)
+                  Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SvgPicture.asset(
+                            'assets/icons/no-comments.svg',
+                            package: 'feed_module',
+                          ),
+                          const SizedBox(height: 26),
+                          Text(
+                            'No comments',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF787878),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
+                if (widget.post.comments.isNotEmpty)
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      child: CommentSection(
+                        post: widget.post,
+                        onReplyTap: (replyTarget, topLevelId) {
+                          setSheetState(() {
+                            replyingTo = replyTarget;
+                            topLevelCommentId = topLevelId;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
                 Padding(
-                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                  ),
                   child: CommentInput(
                     post: widget.post,
                     isReply: replyingTo != null,
@@ -138,7 +165,10 @@ class _PostCardState extends State<PostCard> {
                 child: Text(
                   widget.post.content,
                   style: const TextStyle(
-                      fontSize: 15, height: 1.5, color: Color(0xFF1F1F1F)),
+                    fontSize: 15,
+                    height: 1.5,
+                    color: Color(0xFF1F1F1F),
+                  ),
                 ),
               ),
             // Embedded original post card (repost)

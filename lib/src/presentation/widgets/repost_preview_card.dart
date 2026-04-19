@@ -1,3 +1,4 @@
+import 'package:feed_module/src/utils/responsive_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:feed_module/src/models/post.dart';
 import 'package:feed_module/src/services/mock_data_service.dart';
@@ -22,6 +23,8 @@ class RepostPreviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = MockDataService.getUserById(post.userId);
+    final isCurrentUser = user?.id == '2';
+    final isMobile = ResponsiveLayout.isMobile(context);
 
     return Container(
       decoration: BoxDecoration(
@@ -35,31 +38,108 @@ class RepostPreviewCard extends StatelessWidget {
         children: [
           // Header
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              if (user != null) UserAvatar(url: user.avatarUrl, radius: 16),
-              const SizedBox(width: 8),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  UserAvatar(url: user?.avatarUrl ?? ''),
+                  if (isMobile && !isCurrentUser)
+                    Positioned(
+                      bottom: 0,
+                      right: -4,
+                      child: GestureDetector(
+                        onTap: () {}, // TODO: follow logic
+                        child: Container(
+                          width: 20,
+                          height: 20,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF4535C1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.add,
+                            color: Colors.white,
+                            size: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(width: 12),
               Expanded(
-                child: Wrap(
-                  spacing: 4,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      user?.name ?? 'Unknown',
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: const Color(0xFF333333),
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          user?.name ?? 'Unknown',
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            color: const Color(0xFF333333),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            isMobile
+                                ? '• ${_getTimeAgo(post.timestamp)}'
+                                : '${user?.username} • ${_getTimeAgo(post.timestamp)}',
+                            style: GoogleFonts.inter(
+                              color: const Color(0xFF787878),
+                              fontSize: 14,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      '${user?.username ?? ''} • ${_getTimeAgo(post.timestamp)}',
-                      style: GoogleFonts.inter(
-                        color: const Color(0xFF787878),
-                        fontSize: 14,
+                    if (isMobile) const SizedBox(height: 2),
+                    if (isMobile)
+                      Text(
+                        user?.username ?? 'Unknown',
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF787878),
+                          fontSize: 14,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
                   ],
                 ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!isMobile && !isCurrentUser)
+                    TextButton.icon(
+                      onPressed: () {},
+                      icon: const Icon(
+                        Icons.add_rounded,
+                        color: Color(0xFF4535C1),
+                        size: 20,
+                      ),
+                      label: Text(
+                        'Follow',
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF4535C1),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 0,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                ],
               ),
             ],
           ),

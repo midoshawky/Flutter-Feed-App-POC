@@ -1,3 +1,4 @@
+import 'package:feed_module/feed_module.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -22,7 +23,7 @@ class PostHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMobile = ResponsiveLayout.isMobile(context);
-
+    final isCurrentUser = user.id == '2';
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -30,7 +31,7 @@ class PostHeader extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             UserAvatar(url: user.avatarUrl),
-            if (isMobile)
+            if (isMobile && !isCurrentUser)
               Positioned(
                 bottom: 0,
                 right: -4,
@@ -43,11 +44,7 @@ class PostHeader extends StatelessWidget {
                       color: Color(0xFF4535C1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.add,
-                      color: Colors.white,
-                      size: 14,
-                    ),
+                    child: const Icon(Icons.add, color: Colors.white, size: 14),
                   ),
                 ),
               ),
@@ -72,7 +69,7 @@ class PostHeader extends StatelessWidget {
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
-                      isMobile 
+                      isMobile
                           ? '• ${_getTimeAgo(timestamp)}'
                           : '${user.username} • ${_getTimeAgo(timestamp)}',
                       style: GoogleFonts.inter(
@@ -84,8 +81,7 @@ class PostHeader extends StatelessWidget {
                   ),
                 ],
               ),
-              if (isMobile)
-                const SizedBox(height: 2),
+              if (isMobile) const SizedBox(height: 2),
               if (isMobile)
                 Text(
                   user.username,
@@ -101,7 +97,7 @@ class PostHeader extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (!isMobile)
+            if (!isMobile && !isCurrentUser)
               TextButton.icon(
                 onPressed: () {},
                 icon: const Icon(
@@ -119,7 +115,9 @@ class PostHeader extends StatelessWidget {
                 ),
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 0),
+                    horizontal: 8,
+                    vertical: 0,
+                  ),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
@@ -131,10 +129,31 @@ class PostHeader extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              onSelected: (value) {
-                // TODO: Handle copy link and report
-              },
+              onSelected: (value) {},
               itemBuilder: (context) => [
+                if (isCurrentUser) ...[
+                  PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        SvgPicture.asset(
+                          'assets/icons/edit.svg',
+                          package: 'feed_module',
+                          width: 20,
+                          height: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Edit',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            color: const Color(0xFF1F1F1F),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 PopupMenuItem(
                   value: 'copy',
                   child: Row(
@@ -156,27 +175,52 @@ class PostHeader extends StatelessWidget {
                     ],
                   ),
                 ),
-                PopupMenuItem(
-                  value: 'report',
-                  child: Row(
-                    children: [
-                      SvgPicture.asset(
-                        'assets/icons/report.svg',
-                        package: 'feed_module',
-                        width: 20,
-                        height: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Report',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: const Color(0xFF1F1F1F),
+                if (isCurrentUser) ...[
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        SvgPicture.asset(
+                          'assets/icons/delete.svg',
+                          package: 'feed_module',
+                          width: 20,
+                          height: 20,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 12),
+                        Text(
+                          'Delete',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            color: const Color(0xFF1F1F1F),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
+                if (!isCurrentUser) ...[
+                  PopupMenuItem(
+                    value: 'report',
+                    child: Row(
+                      children: [
+                        SvgPicture.asset(
+                          'assets/icons/report.svg',
+                          package: 'feed_module',
+                          width: 20,
+                          height: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Report',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            color: const Color(0xFF1F1F1F),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ],

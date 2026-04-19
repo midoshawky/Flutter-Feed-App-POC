@@ -44,26 +44,7 @@ class PostContent extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: RichText(
-              text: TextSpan(
-                children: _buildTextSpans(post.content),
-              ),
-            ),
-          ),
-        if (post.tags.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12.0),
-            child: Wrap(
-              spacing: 8.0,
-              children: post.tags.map((tag) {
-                return Chip(
-                  label: Text(tag),
-                  labelStyle: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF333333)),
-                  backgroundColor: const Color(0xFFEAEAEA),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-                  side: BorderSide.none,
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                );
-              }).toList(),
+              text: TextSpan(children: _buildTextSpans(post.content)),
             ),
           ),
         if (post.type != PostType.text) PostMedia(post: post),

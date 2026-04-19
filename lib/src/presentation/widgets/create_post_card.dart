@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:feed_module/src/utils/responsive_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fluttertagger/fluttertagger.dart';
 import 'package:image_picker/image_picker.dart';
@@ -37,11 +38,17 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
   ];
   List<String> _filteredTags = [];
   bool _isSearching = false;
+  bool _isHasInput = false;
 
   @override
   void initState() {
     super.initState();
     _controller = FlutterTaggerController();
+    _controller.addListener(() {
+      setState(() {
+        _isHasInput = _controller.text.isNotEmpty;
+      });
+    });
   }
 
   @override
@@ -158,80 +165,85 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Header row: avatar + text field ──────────────────────────────
-          Builder(builder: (context) {
-            final taggerChild = FlutterTagger(
-              controller: _controller,
-              onSearch: _onSearch,
-              overlay: const SizedBox.shrink(),
-              triggerCharacterAndStyles: const {
-                '#': TextStyle(
-                  color: Color(0xFF4535C1),
-                  fontWeight: FontWeight.w500,
-                ),
-              },
-              builder: (context, textFieldKey) {
-                return TextField(
-                  key: textFieldKey,
-                  controller: _controller,
-                  maxLines: null,
-                  expands: isMobile,
-                  textAlignVertical: TextAlignVertical.top,
-                  enabled: !_isLoading,
-                  onChanged: (val) => setState(() {}),
-                  maxLength: _maxLength,
-                  buildCounter: (
-                    context, {
-                    required currentLength,
-                    required isFocused,
-                    maxLength,
-                  }) =>
-                      null,
-                  decoration: InputDecoration(
-                    hintText:
-                        "What are you working on, ${currentUser.name.split(' ')[0]}?",
-                    hintStyle: GoogleFonts.inter(
-                      fontSize: 20,
-                      color: const Color(0xFF787878),
-                    ),
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
+          Builder(
+            builder: (context) {
+              final taggerChild = FlutterTagger(
+                controller: _controller,
+                onSearch: _onSearch,
+                overlay: const SizedBox.shrink(),
+                triggerCharacterAndStyles: const {
+                  '#': TextStyle(
+                    color: Color(0xFF4535C1),
+                    fontWeight: FontWeight.w500,
                   ),
-                  style: GoogleFonts.inter(
-                    fontSize: 20,
-                    color: const Color(0xFF1F1F1F),
-                    height: 1.5,
-                  ),
-                );
-              },
-            );
-
-            final rowChild = Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                UserAvatar(url: currentUser.avatarUrl),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      if (isMobile) Expanded(child: taggerChild) else taggerChild,
-                      const SizedBox(height: 4),
-                      Text(
-                        '${_maxLength - _controller.text.length} characters left',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: const Color(0xFF787878),
-                        ),
+                },
+                builder: (context, textFieldKey) {
+                  return TextField(
+                    key: textFieldKey,
+                    controller: _controller,
+                    maxLines: null,
+                    expands: isMobile,
+                    textAlignVertical: TextAlignVertical.top,
+                    enabled: !_isLoading,
+                    onChanged: (val) => setState(() {}),
+                    maxLength: _maxLength,
+                    buildCounter:
+                        (
+                          context, {
+                          required currentLength,
+                          required isFocused,
+                          maxLength,
+                        }) => null,
+                    decoration: InputDecoration(
+                      hintText:
+                          "What are you working on, ${currentUser.name.split(' ')[0]}?",
+                      hintStyle: GoogleFonts.inter(
+                        fontSize: 20,
+                        color: const Color(0xFF787878),
                       ),
-                    ],
-                  ),
-                ),
-              ],
-            );
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    style: GoogleFonts.inter(
+                      fontSize: 20,
+                      color: const Color(0xFF1F1F1F),
+                      height: 1.5,
+                    ),
+                  );
+                },
+              );
 
-            return isMobile ? Expanded(child: rowChild) : rowChild;
-          }),
+              final rowChild = Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  UserAvatar(url: currentUser.avatarUrl),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        if (isMobile)
+                          Expanded(child: taggerChild)
+                        else
+                          taggerChild,
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_maxLength - _controller.text.length} characters left',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            color: const Color(0xFF787878),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+
+              return isMobile ? Expanded(child: rowChild) : rowChild;
+            },
+          ),
 
           // ── Inline tag suggestions ───────────────────────────────────────
           if (_isSearching && _filteredTags.isNotEmpty) ...[
@@ -358,25 +370,49 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
           const SizedBox(height: 16),
           Row(
             children: [
-              IconButton(
-                onPressed: _isLoading ? null : _pickImages,
-                icon: const Icon(
-                  Icons.image_outlined,
-                  color: Color(0xFF333333),
+              Tooltip(
+                message: "Add an image or video",
+                preferBelow: false,
+                verticalOffset: 20,
+                padding: EdgeInsets.all(12),
+                textStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  fontStyle: FontStyle.normal,
+                  height: 1.42,
+                  letterSpacing: 0,
+                  color: Color(0xFF343434),
                 ),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                tooltip: 'Pick images',
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  onPressed: _isLoading ? null : _pickImages,
+                  icon: SvgPicture.asset(
+                    'assets/icons/image.svg',
+                    package: 'feed_module',
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
               ),
               const Spacer(),
               ElevatedButton(
-                onPressed: _isLoading ? null : _handlePost,
+                onPressed: _isLoading || !_isHasInput ? null : _handlePost,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4535C1),
                   foregroundColor: const Color(0xFFF5F5F5),
-                  disabledBackgroundColor: const Color(0xFFB3ADEC),
+                  fixedSize: Size.fromHeight(40),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 32,

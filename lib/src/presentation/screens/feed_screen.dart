@@ -15,20 +15,20 @@ class FeedScreen extends ConsumerWidget {
 
   Future<void> _handleManualSeed(BuildContext context) async {
     try {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Seeding Firestore...')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Seeding Firestore...')));
       await FirestoreSeedService().seedIfNeeded(force: true);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Seeding complete!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Seeding complete!')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -84,28 +84,29 @@ class FeedScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
-      appBar: AppBar(
-        title: Text(
-          'Social Feed',
-          style: GoogleFonts.inter(
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.black),
-            onPressed: () => _handleManualSeed(context),
-            tooltip: 'Seed Data',
-          ),
-        ],
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-      ),
+      // appBar: AppBar(
+      //   title: Text(
+      //     'Social Feed',
+      //     style: GoogleFonts.inter(
+      //       fontWeight: FontWeight.bold,
+      //       color: Colors.black,
+      //     ),
+      //   ),
+      //   actions: [
+      //     IconButton(
+      //       icon: const Icon(Icons.refresh, color: Colors.black),
+      //       onPressed: () => _handleManualSeed(context),
+      //       tooltip: 'Seed Data',
+      //     ),
+      //   ],
+      //   backgroundColor: Colors.white,
+      //   elevation: 0,
+      //   centerTitle: true,
+      // ),
       floatingActionButton: isMobile
           ? FloatingActionButton(
               onPressed: () => _showCreatePostSheet(context),
+
               backgroundColor: const Color(0xFF4535C1),
               child: const Icon(Icons.add),
             )
@@ -120,7 +121,7 @@ class FeedScreen extends ConsumerWidget {
               padding: const EdgeInsets.only(bottom: 24),
               itemBuilder: (_, i) {
                 if (i == 0) {
-                  return isMobile 
+                  return isMobile
                       ? GestureDetector(
                           onTap: () => _showCreatePostSheet(context),
                           child: const MobileCreatePostTrigger(),
@@ -168,7 +169,7 @@ class FeedScreen extends ConsumerWidget {
               padding: const EdgeInsets.only(bottom: 24),
               itemBuilder: (context, index) {
                 if (index == 0) {
-                  return isMobile 
+                  return isMobile
                       ? GestureDetector(
                           onTap: () => _showCreatePostSheet(context),
                           child: const MobileCreatePostTrigger(),

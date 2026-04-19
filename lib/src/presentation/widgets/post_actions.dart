@@ -96,15 +96,16 @@ class _ActionButton extends StatelessWidget {
         child: Row(
           children: [
             icon,
-            const SizedBox(width: 4),
-            Text(
-              '$count',
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                color: color,
-                fontWeight: FontWeight.normal,
+            if (count > 0) const SizedBox(width: 4),
+            if (count > 0)
+              Text(
+                '$count',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  color: color,
+                  fontWeight: FontWeight.normal,
+                ),
               ),
-            ),
           ],
         ),
       ),
