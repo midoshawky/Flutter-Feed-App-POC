@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/comment.dart';
 import '../../domain/entities/comment_entity.dart';
@@ -11,11 +12,14 @@ import 'user_avatar.dart';
 class CommentItem extends ConsumerStatefulWidget {
   final Comment comment;
   final bool isReply;
+
   /// Post ID needed to dispatch to the provider
   final String postId;
+
   /// ID of the direct parent comment (for nested replies, this is the top-level comment ID)
   final String parentCommentId;
-  final void Function(Comment replyTarget, String topLevelCommentId)? onReplyTap;
+  final void Function(Comment replyTarget, String topLevelCommentId)?
+  onReplyTap;
 
   const CommentItem({
     super.key,
@@ -65,11 +69,9 @@ class _CommentItemState extends ConsumerState<CommentItem> {
     );
 
     try {
-      await ref.read(optimisticFeedProvider.notifier).addReply(
-            widget.postId,
-            widget.parentCommentId,
-            reply,
-          );
+      await ref
+          .read(optimisticFeedProvider.notifier)
+          .addReply(widget.postId, widget.parentCommentId, reply);
 
       _replyController.clear();
       if (mounted) {
@@ -80,9 +82,9 @@ class _CommentItemState extends ConsumerState<CommentItem> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error replying: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error replying: $e')));
       }
     }
   }
@@ -93,6 +95,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
     final avatarUrl = user?.avatarUrl ?? 'https://i.pravatar.cc/150';
     final handle = user?.username ?? '@user';
     final currentUser = MockDataService.users[1]; // Sara Hany
+    final isCurrentUser = currentUser.id == '2';
 
     return Padding(
       padding: EdgeInsets.only(top: 16, left: widget.isReply ? 48 : 0),
@@ -110,22 +113,22 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Author row
-                    Wrap(
+                    Row(
                       spacing: 4,
                       children: [
                         Text(
                           widget.comment.userName,
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                            color: const Color(0xFF333333),
+                            fontSize: widget.isReply ? 12 : 14,
+                            color: Colors.black,
                           ),
                         ),
                         Text(
                           handle,
                           style: GoogleFonts.inter(
                             color: const Color(0xFF787878),
-                            fontSize: 14,
+                            fontSize: widget.isReply ? 12 : 12,
                           ),
                         ),
                         Text(
@@ -135,6 +138,64 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                             fontSize: 14,
                           ),
                         ),
+                        if (isCurrentUser)
+                          PopupMenuButton<String>(
+                            icon: const Icon(
+                              Icons.more_horiz,
+                              color: Color(0xFF787878),
+                            ),
+                            padding: EdgeInsets.zero,
+                            position: PopupMenuPosition.under,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            onSelected: (value) {},
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: 'edit',
+                                child: Row(
+                                  children: [
+                                    SvgPicture.asset(
+                                      'assets/icons/edit.svg',
+                                      package: 'feed_module',
+                                      width: 20,
+                                      height: 20,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'Edit',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        color: const Color(0xFF1F1F1F),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    SvgPicture.asset(
+                                      'assets/icons/delete.svg',
+                                      package: 'feed_module',
+                                      width: 20,
+                                      height: 20,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'Delete',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        color: const Color(0xFF1F1F1F),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -149,29 +210,71 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                     ),
                     const SizedBox(height: 6),
                     // Reply tap
-                    GestureDetector(
-                      onTap: () {
-                        if (ResponsiveLayout.isMobile(context)) {
-                          if (widget.onReplyTap != null) {
-                            widget.onReplyTap!(widget.comment, widget.parentCommentId);
-                          }
-                        } else {
-                          setState(() {
-                            _showReplyInput = !_showReplyInput;
-                          });
-                          if (_showReplyInput) {
-                            Future.microtask(() => _replyFocus.requestFocus());
-                          }
-                        }
-                      },
-                      child: Text(
-                        'Reply',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF787878),
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            if (ResponsiveLayout.isMobile(context)) {
+                              if (widget.onReplyTap != null) {
+                                widget.onReplyTap!(
+                                  widget.comment,
+                                  widget.parentCommentId,
+                                );
+                              }
+                            } else {
+                              setState(() {
+                                _showReplyInput = !_showReplyInput;
+                              });
+                              if (_showReplyInput) {
+                                Future.microtask(
+                                  () => _replyFocus.requestFocus(),
+                                );
+                              }
+                            }
+                          },
+                          child: Text(
+                            'Reply',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF4535C1),
+                            ),
+                          ),
                         ),
-                      ),
+                        if (widget.comment.replies.isNotEmpty)
+                          Text(
+                            " • ",
+                            style: TextStyle(color: const Color(0xFF787878)),
+                          ), // ── View Replies toggle ─────────────────────────────────────────
+                        if (widget.comment.replies.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: GestureDetector(
+                              onTap: () =>
+                                  setState(() => _showReplies = !_showReplies),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    _showReplies
+                                        ? 'Hide ${widget.comment.replies.length} repl${widget.comment.replies.length == 1 ? 'y' : 'ies'}'
+                                        : 'View ${widget.comment.replies.length} repl${widget.comment.replies.length == 1 ? 'y' : 'ies'}',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      color: const Color(0xFF787878),
+                                    ),
+                                  ),
+                                  Icon(
+                                    _showReplies
+                                        ? Icons.keyboard_arrow_up
+                                        : Icons.keyboard_arrow_down,
+                                    size: 18,
+                                    color: const Color(0xFF787878),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),
@@ -221,43 +324,17 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                           ),
                           GestureDetector(
                             onTap: _submitReply,
-                            child: const Icon(Icons.send,
-                                size: 18, color: Color(0xFF4535C1)),
+                            child: const Icon(
+                              Icons.send,
+                              size: 18,
+                              color: Color(0xFF4535C1),
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
                 ],
-              ),
-            ),
-
-          // ── View Replies toggle ─────────────────────────────────────────
-          if (widget.comment.replies.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(left: 48, top: 6),
-              child: GestureDetector(
-                onTap: () => setState(() => _showReplies = !_showReplies),
-                child: Row(
-                  children: [
-                    Text(
-                      _showReplies
-                          ? 'Hide replies'
-                          : 'View ${widget.comment.replies.length} repl${widget.comment.replies.length == 1 ? 'y' : 'ies'}',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: const Color(0xFF787878),
-                      ),
-                    ),
-                    Icon(
-                      _showReplies
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      size: 18,
-                      color: const Color(0xFF787878),
-                    ),
-                  ],
-                ),
               ),
             ),
 

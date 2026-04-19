@@ -250,14 +250,14 @@ class _RepostDialogState extends ConsumerState<_RepostDialog> {
               onPressed: _isLoading ? null : _submit,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4535C1),
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: const Color(0xFFB3ADEC),
+                foregroundColor: const Color(0xFFF5F5F5),
+                fixedSize: Size.fromHeight(40),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(100),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 32,
-                  vertical: 14,
+                  vertical: 12,
                 ),
                 elevation: 0,
               ),
