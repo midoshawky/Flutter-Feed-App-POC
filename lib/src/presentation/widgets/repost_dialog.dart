@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertagger/fluttertagger.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../models/post.dart';
 import '../../domain/entities/post_entity.dart';
 import '../providers/optimistic_feed_provider.dart';
@@ -159,7 +158,7 @@ class _RepostDialogState extends ConsumerState<_RepostDialog> {
                       onChanged: (v) => setState(() {}),
                       decoration: InputDecoration(
                         hintText: 'Add details to your post',
-                        hintStyle: GoogleFonts.inter(
+                        hintStyle: TextStyle(
                           fontSize: 16,
                           color: const Color(0xFF787878),
                         ),
@@ -167,7 +166,7 @@ class _RepostDialogState extends ConsumerState<_RepostDialog> {
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
                       ),
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         fontSize: 16,
                         color: const Color(0xFF1F1F1F),
                       ),
@@ -226,7 +225,7 @@ class _RepostDialogState extends ConsumerState<_RepostDialog> {
                           const SizedBox(width: 6),
                           Text(
                             '#$tag',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               fontSize: 14,
                               color: const Color(0xFF4535C1),
                               fontWeight: FontWeight.w500,
@@ -272,7 +271,7 @@ class _RepostDialogState extends ConsumerState<_RepostDialog> {
                     )
                   : Text(
                       'Repost',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                       ),

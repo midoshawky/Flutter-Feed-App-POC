@@ -100,9 +100,10 @@ class _PostCardState extends State<PostCard> {
                   Expanded(
                     child: SingleChildScrollView(
                       controller: scrollController,
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
                       child: CommentSection(
                         post: widget.post,
+                        replyingToId: replyingTo?.id,
                         onReplyTap: (replyTarget, topLevelId) {
                           setSheetState(() {
                             replyingTo = replyTarget;

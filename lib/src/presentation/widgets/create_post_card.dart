@@ -3,7 +3,6 @@ import 'package:feed_module/src/utils/responsive_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:fluttertagger/fluttertagger.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../domain/entities/post_entity.dart';
@@ -197,7 +196,7 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
                     decoration: InputDecoration(
                       hintText:
                           "What are you working on, ${currentUser.name.split(' ')[0]}?",
-                      hintStyle: GoogleFonts.inter(
+                      hintStyle: TextStyle(
                         fontSize: 20,
                         color: const Color(0xFF787878),
                       ),
@@ -205,7 +204,7 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
                       isDense: true,
                       contentPadding: EdgeInsets.zero,
                     ),
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       fontSize: 20,
                       color: const Color(0xFF1F1F1F),
                       height: 1.5,
@@ -230,7 +229,7 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
                         const SizedBox(height: 4),
                         Text(
                           '${_maxLength - _controller.text.length} characters left',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             fontSize: 14,
                             color: const Color(0xFF787878),
                           ),
@@ -288,7 +287,7 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
                           const SizedBox(width: 6),
                           Text(
                             '#$tag',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               fontSize: 15,
                               color: const Color(0xFF4535C1),
                               fontWeight: FontWeight.w500,
@@ -431,7 +430,7 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
                       )
                     : Text(
                         'Post',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                         ),

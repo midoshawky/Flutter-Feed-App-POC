@@ -1,6 +1,5 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../models/post.dart';
 import 'post_media.dart';
 
@@ -15,7 +14,7 @@ class PostContent extends StatelessWidget {
       if (word.startsWith('#')) {
         return TextSpan(
           text: '$word ',
-          style: GoogleFonts.inter(
+          style: TextStyle(
             fontSize: 15,
             height: 1.5,
             color: const Color(0xFF4535C1),
@@ -26,7 +25,7 @@ class PostContent extends StatelessWidget {
       }
       return TextSpan(
         text: '$word ',
-        style: GoogleFonts.inter(
+        style: TextStyle(
           fontSize: 15,
           height: 1.5,
           color: const Color(0xFF1F1F1F),

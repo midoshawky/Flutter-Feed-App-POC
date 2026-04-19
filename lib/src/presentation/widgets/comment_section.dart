@@ -8,11 +8,13 @@ import 'comment_item.dart';
 class CommentSection extends StatelessWidget {
   final Post post;
   final void Function(Comment replyTarget, String topLevelCommentId)? onReplyTap;
+  final String? replyingToId;
 
   const CommentSection({
     super.key, 
     required this.post,
     this.onReplyTap,
+    this.replyingToId,
   });
 
   @override
@@ -32,6 +34,7 @@ class CommentSection extends StatelessWidget {
               postId: post.id,
               parentCommentId: comment.id,
               onReplyTap: onReplyTap,
+              replyingToId: replyingToId,
             )),
       ],
     );

@@ -1,7 +1,6 @@
 import 'package:feed_module/feed_module.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../models/user.dart';
 import '../../utils/responsive_layout.dart';
 import 'user_avatar.dart';
@@ -60,7 +59,7 @@ class PostHeader extends StatelessWidget {
                 children: [
                   Text(
                     user.name,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
                       color: const Color(0xFF333333),
@@ -72,7 +71,7 @@ class PostHeader extends StatelessWidget {
                       isMobile
                           ? '• ${_getTimeAgo(timestamp)}'
                           : '${user.username} • ${_getTimeAgo(timestamp)}',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         color: const Color(0xFF787878),
                         fontSize: 14,
                       ),
@@ -85,7 +84,7 @@ class PostHeader extends StatelessWidget {
               if (isMobile)
                 Text(
                   user.username,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     color: const Color(0xFF787878),
                     fontSize: 14,
                   ),
@@ -107,7 +106,7 @@ class PostHeader extends StatelessWidget {
                 ),
                 label: Text(
                   'Follow',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     color: const Color(0xFF4535C1),
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
@@ -145,7 +144,7 @@ class PostHeader extends StatelessWidget {
                         const SizedBox(width: 12),
                         Text(
                           'Edit',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             fontSize: 14,
                             color: const Color(0xFF1F1F1F),
                           ),
@@ -167,7 +166,7 @@ class PostHeader extends StatelessWidget {
                       const SizedBox(width: 12),
                       Text(
                         'Copy link',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           fontSize: 14,
                           color: const Color(0xFF1F1F1F),
                         ),
@@ -189,7 +188,7 @@ class PostHeader extends StatelessWidget {
                         const SizedBox(width: 12),
                         Text(
                           'Delete',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             fontSize: 14,
                             color: const Color(0xFF1F1F1F),
                           ),
@@ -212,7 +211,7 @@ class PostHeader extends StatelessWidget {
                         const SizedBox(width: 12),
                         Text(
                           'Report',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             fontSize: 14,
                             color: const Color(0xFF1F1F1F),
                           ),

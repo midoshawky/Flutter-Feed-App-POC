@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../models/post.dart';
 import '../../domain/entities/comment_entity.dart';
 import '../providers/optimistic_feed_provider.dart';
@@ -119,7 +118,7 @@ class _CommentInputState extends ConsumerState<CommentInput> {
                   children: [
                     Text(
                       '@${widget.replyToUsername}',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         fontSize: 14,
                         color: const Color(0xFF4535C1),
                         fontWeight: FontWeight.w500,
@@ -147,14 +146,14 @@ class _CommentInputState extends ConsumerState<CommentInput> {
                   hintText: widget.isReply
                       ? 'Write a reply...'
                       : 'Write a comment...',
-                  hintStyle: GoogleFonts.inter(
+                  hintStyle: TextStyle(
                     fontSize: 14,
                     color: const Color(0xFF787878),
                   ),
                   border: InputBorder.none,
                   isDense: true,
                 ),
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   fontSize: 14,
                   color: const Color(0xFF1F1F1F),
                 ),
@@ -188,7 +187,7 @@ class _CommentInputState extends ConsumerState<CommentInput> {
                   ? Icon(Icons.send_rounded)
                   : Text(
                       'Comment',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -224,14 +223,14 @@ class _CommentInputState extends ConsumerState<CommentInput> {
 
                       decoration: InputDecoration(
                         hintText: 'Add a comment...',
-                        hintStyle: GoogleFonts.inter(
+                        hintStyle: TextStyle(
                           fontSize: 16,
                           color: const Color(0xFF787878),
                         ),
                         border: InputBorder.none,
                         isDense: true,
                       ),
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         fontSize: 16,
                         color: const Color(0xFF1F1F1F),
                       ),
@@ -272,7 +271,7 @@ class _CommentInputState extends ConsumerState<CommentInput> {
                             )
                           : Text(
                               'Comment',
-                              style: GoogleFonts.inter(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                               ),

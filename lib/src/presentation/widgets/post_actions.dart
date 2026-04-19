@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../models/post.dart';
 import '../providers/optimistic_feed_provider.dart';
 import 'repost_dialog.dart';
@@ -100,7 +99,7 @@ class _ActionButton extends StatelessWidget {
             if (count > 0)
               Text(
                 '$count',
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   fontSize: 16,
                   color: color,
                   fontWeight: FontWeight.normal,

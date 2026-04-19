@@ -2,7 +2,6 @@ import 'package:feed_module/src/utils/responsive_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:feed_module/src/models/post.dart';
 import 'package:feed_module/src/services/mock_data_service.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'post_media.dart';
 import 'user_avatar.dart';
 
@@ -77,7 +76,7 @@ class RepostPreviewCard extends StatelessWidget {
                       children: [
                         Text(
                           user?.name ?? 'Unknown',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
                             color: const Color(0xFF333333),
@@ -89,7 +88,7 @@ class RepostPreviewCard extends StatelessWidget {
                             isMobile
                                 ? '• ${_getTimeAgo(post.timestamp)}'
                                 : '${user?.username} • ${_getTimeAgo(post.timestamp)}',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               color: const Color(0xFF787878),
                               fontSize: 14,
                             ),
@@ -102,7 +101,7 @@ class RepostPreviewCard extends StatelessWidget {
                     if (isMobile)
                       Text(
                         user?.username ?? 'Unknown',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: const Color(0xFF787878),
                           fontSize: 14,
                         ),
@@ -124,7 +123,7 @@ class RepostPreviewCard extends StatelessWidget {
                       ),
                       label: Text(
                         'Follow',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: const Color(0xFF4535C1),
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
@@ -149,7 +148,7 @@ class RepostPreviewCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               post.content,
-              style: GoogleFonts.inter(
+              style: TextStyle(
                 fontSize: 14,
                 color: const Color(0xFF1F1F1F),
                 height: 1.5,

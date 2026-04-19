@@ -2,7 +2,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'firebase_options.dart';
 import 'package:feed_module/feed_module.dart';
 
@@ -28,6 +27,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: false,
+        fontFamily: 'Product Sans',
         brightness: Brightness.light,
         scaffoldBackgroundColor: const Color(0xFFF7F7F7),
         primaryColor: const Color(0xFF4535C1),
@@ -35,7 +35,6 @@ class MyApp extends StatelessWidget {
           seedColor: const Color(0xFF4535C1),
           surface: Colors.white,
         ),
-        textTheme: GoogleFonts.interTextTheme(Theme.of(context).textTheme),
       ),
       home: const FeedScreen(),
     );

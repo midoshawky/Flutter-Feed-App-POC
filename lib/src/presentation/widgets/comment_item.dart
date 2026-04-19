@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../models/comment.dart';
 import '../../domain/entities/comment_entity.dart';
 import '../providers/optimistic_feed_provider.dart';
@@ -20,6 +19,7 @@ class CommentItem extends ConsumerStatefulWidget {
   final String parentCommentId;
   final void Function(Comment replyTarget, String topLevelCommentId)?
   onReplyTap;
+  final String? replyingToId;
 
   const CommentItem({
     super.key,
@@ -28,6 +28,7 @@ class CommentItem extends ConsumerStatefulWidget {
     required this.parentCommentId,
     this.isReply = false,
     this.onReplyTap,
+    this.replyingToId,
   });
 
   @override
@@ -97,8 +98,16 @@ class _CommentItemState extends ConsumerState<CommentItem> {
     final currentUser = MockDataService.users[1]; // Sara Hany
     final isCurrentUser = currentUser.id == '2';
 
-    return Padding(
-      padding: EdgeInsets.only(top: 16, left: widget.isReply ? 48 : 0),
+    final isHighlighted = widget.replyingToId == widget.comment.id;
+
+    return Container(
+      color: isHighlighted ? const Color(0xFFF3F3FF) : Colors.transparent,
+      padding: EdgeInsets.only(
+        top: 16,
+        left: widget.isReply ? 48 : 16,
+        right: 16,
+        bottom: isHighlighted ? 16 : 0,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -118,7 +127,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                       children: [
                         Text(
                           widget.comment.userName,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: widget.isReply ? 12 : 14,
                             color: Colors.black,
@@ -126,14 +135,14 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                         ),
                         Text(
                           handle,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             color: const Color(0xFF787878),
                             fontSize: widget.isReply ? 12 : 12,
                           ),
                         ),
                         Text(
                           '• ${_getTimeAgo(widget.comment.timestamp)}',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             color: const Color(0xFF787878),
                             fontSize: 14,
                           ),
@@ -164,7 +173,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                                     const SizedBox(width: 12),
                                     Text(
                                       'Edit',
-                                      style: GoogleFonts.inter(
+                                      style: TextStyle(
                                         fontSize: 14,
                                         color: const Color(0xFF1F1F1F),
                                       ),
@@ -186,7 +195,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                                     const SizedBox(width: 12),
                                     Text(
                                       'Delete',
-                                      style: GoogleFonts.inter(
+                                      style: TextStyle(
                                         fontSize: 14,
                                         color: const Color(0xFF1F1F1F),
                                       ),
@@ -202,7 +211,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                     // Comment text
                     Text(
                       widget.comment.text,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         fontSize: 14,
                         color: const Color(0xFF1F1F1F),
                         height: 1.4,
@@ -234,7 +243,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                           },
                           child: Text(
                             'Reply',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: const Color(0xFF4535C1),
@@ -258,7 +267,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                                     _showReplies
                                         ? 'Hide ${widget.comment.replies.length} repl${widget.comment.replies.length == 1 ? 'y' : 'ies'}'
                                         : 'View ${widget.comment.replies.length} repl${widget.comment.replies.length == 1 ? 'y' : 'ies'}',
-                                    style: GoogleFonts.inter(
+                                    style: TextStyle(
                                       fontSize: 13,
                                       color: const Color(0xFF787878),
                                     ),
@@ -308,14 +317,14 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                               decoration: InputDecoration(
                                 hintText:
                                     'Reply to ${widget.comment.userName.split(' ')[0]}…',
-                                hintStyle: GoogleFonts.inter(
+                                hintStyle: TextStyle(
                                   fontSize: 13,
                                   color: const Color(0xFF787878),
                                 ),
                                 border: InputBorder.none,
                                 isDense: true,
                               ),
-                              style: GoogleFonts.inter(
+                              style: TextStyle(
                                 fontSize: 13,
                                 color: const Color(0xFF1F1F1F),
                               ),
@@ -349,6 +358,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                 parentCommentId: widget.parentCommentId,
                 isReply: true,
                 onReplyTap: widget.onReplyTap,
+                replyingToId: widget.replyingToId,
               ),
             ),
         ],

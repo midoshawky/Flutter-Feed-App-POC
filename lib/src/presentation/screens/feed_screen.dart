@@ -83,7 +83,7 @@ class FeedScreen extends ConsumerWidget {
     final isMobile = ResponsiveLayout.isMobile(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
+      backgroundColor: Colors.white,
       // appBar: AppBar(
       //   title: Text(
       //     'Social Feed',

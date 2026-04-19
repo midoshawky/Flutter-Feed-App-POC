@@ -8,12 +8,11 @@ class PostMedia extends StatelessWidget {
   const PostMedia({super.key, required this.post});
 
   void _openSlider(BuildContext context, List<String> urls, int index) {
-    showGeneralDialog(
+    showDialog(
       context: context,
-      barrierColor: Colors.black,
-      pageBuilder: (context, animation, secondaryAnimation) {
-        return ImageSliderPreview(imageUrls: urls, initialIndex: index);
-      },
+
+      builder: (context) =>
+          ImageSliderPreview(imageUrls: urls, initialIndex: index),
     );
   }
 

@@ -1,3 +1,4 @@
+import 'package:feed_module/src/utils/responsive_layout.dart';
 import 'package:flutter/material.dart';
 
 class ImageSliderPreview extends StatefulWidget {
@@ -51,112 +52,134 @@ class _ImageSliderPreviewState extends State<ImageSliderPreview> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = ResponsiveLayout.isMobile(context);
     return Dialog(
-      backgroundColor: Colors.transparent,
       insetPadding: EdgeInsets.zero,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Background dismiss
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: Container(
-              color: Colors.black.withValues(alpha: 0.9),
-              width: double.infinity,
-              height: double.infinity,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: double.infinity,
+          maxWidth: isMobile ? (MediaQuery.of(context).size.width - 30) : 500,
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Background dismiss
+            GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: Container(
+                color: Colors.transparent,
+                width: double.infinity,
+                height: double.infinity,
+              ),
             ),
-          ),
-          
-          // Image Slider
-          SizedBox(
-            width: double.infinity,
-            height: double.infinity,
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: widget.imageUrls.length,
-              onPageChanged: (index) {
-                setState(() => _currentIndex = index);
-              },
-              itemBuilder: (context, index) {
-                return InteractiveViewer(
-                  minScale: 1.0,
-                  maxScale: 4.0,
-                  child: Center(
-                    child: Image.network(
-                      widget.imageUrls[index],
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => const Center(
-                        child: Icon(Icons.error, color: Colors.white, size: 48),
+
+            // Image Slider
+            SizedBox(
+              width: isMobile ? (MediaQuery.of(context).size.width - 50) : 480,
+              height: double.infinity,
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: widget.imageUrls.length,
+                onPageChanged: (index) {
+                  setState(() => _currentIndex = index);
+                },
+                itemBuilder: (context, index) {
+                  return InteractiveViewer(
+                    minScale: 1.0,
+                    maxScale: 4.0,
+                    child: Center(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          widget.imageUrls[index],
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const Center(
+                            child: Icon(
+                              Icons.error,
+                              color: Colors.white,
+                              size: 48,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          // Previous Button
-          if (widget.imageUrls.length > 1 && _currentIndex > 0)
-            Positioned(
-              left: 16,
-              child: _buildNavButton(
-                icon: Icons.keyboard_arrow_left,
-                onTap: _previousPage,
+                  );
+                },
               ),
             ),
 
-          // Next Button
-          if (widget.imageUrls.length > 1 && _currentIndex < widget.imageUrls.length - 1)
-            Positioned(
-              right: 16,
-              child: _buildNavButton(
-                icon: Icons.keyboard_arrow_right,
-                onTap: _nextPage,
-              ),
-            ),
-
-          // Close Button
-          Positioned(
-            top: 40,
-            right: 16,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.5),
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ),
-          ),
-
-          // Page Indicator
-          if (widget.imageUrls.length > 1)
-            Positioned(
-              bottom: 40,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${_currentIndex + 1} / ${widget.imageUrls.length}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
+            // Previous Button
+            if (widget.imageUrls.length > 1 && _currentIndex > 0)
+              Positioned(
+                left: 2,
+                child: _buildNavButton(
+                  icon: Icons.keyboard_arrow_left,
+                  onTap: _previousPage,
                 ),
               ),
-            ),
-        ],
+
+            // Next Button
+            if (widget.imageUrls.length > 1 &&
+                _currentIndex < widget.imageUrls.length - 1)
+              Positioned(
+                right: 2,
+                child: _buildNavButton(
+                  icon: Icons.keyboard_arrow_right,
+                  onTap: _nextPage,
+                ),
+              ),
+
+            // Close Button
+            // Positioned(
+            //   top: 40,
+            //   right: 16,
+            //   child: Container(
+            //     decoration: BoxDecoration(
+            //       color: Colors.black.withValues(alpha: 0.5),
+            //       shape: BoxShape.circle,
+            //     ),
+            //     child: IconButton(
+            //       icon: const Icon(Icons.close, color: Colors.white),
+            //       onPressed: () => Navigator.of(context).pop(),
+            //     ),
+            //   ),
+            // ),
+
+            // Page Indicator
+            if (widget.imageUrls.length > 1)
+              Positioned(
+                bottom: 40,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${_currentIndex + 1} / ${widget.imageUrls.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildNavButton({required IconData icon, required VoidCallback onTap}) {
+  Widget _buildNavButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
