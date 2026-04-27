@@ -4,8 +4,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../models/user.dart';
 import '../../utils/responsive_layout.dart';
 import 'user_avatar.dart';
-
-class PostHeader extends StatelessWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class PostHeader extends ConsumerWidget {
   final User user;
   final DateTime timestamp;
 
@@ -20,9 +20,9 @@ class PostHeader extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context , WidgetRef ref) {
     final isMobile = ResponsiveLayout.isMobile(context);
-    final isCurrentUser = user.id == '2';
+    final isCurrentUser = user.id == ref.read(currentUserIdProvider);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [

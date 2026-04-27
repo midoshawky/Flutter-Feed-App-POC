@@ -1,5 +1,7 @@
 import '../../models/post.dart';
+import '../../models/user.dart';
 import 'comment_entity.dart';
+import 'user_entity.dart';
 
 enum PostTypeEntity { text, image, video, multiImage }
 
@@ -17,6 +19,7 @@ class PostEntity {
   final DateTime timestamp;
   final bool isLiked;
   final PostEntity? repostedFrom;
+  final UserEntity? user;
 
   const PostEntity({
     required this.id,
@@ -32,6 +35,7 @@ class PostEntity {
     required this.timestamp,
     this.isLiked = false,
     this.repostedFrom,
+    this.user,
   });
 
   PostEntity copyWith({
@@ -55,6 +59,7 @@ class PostEntity {
       timestamp: timestamp,
       isLiked: isLiked ?? this.isLiked,
       repostedFrom: repostedFrom ?? this.repostedFrom,
+      user: user,
     );
   }
 
@@ -73,6 +78,14 @@ class PostEntity {
       timestamp: timestamp,
       isLiked: isLiked,
       repostedFrom: repostedFrom?.toLegacy(),
+      user: user != null
+          ? User(
+              id: user!.id,
+              name: user!.name,
+              username: user!.username,
+              avatarUrl: user!.avatarUrl,
+            )
+          : null,
     );
   }
 }

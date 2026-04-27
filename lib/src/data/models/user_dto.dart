@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/user_entity.dart';
 
 class UserDto {
@@ -14,21 +13,14 @@ class UserDto {
     required this.avatarUrl,
   });
 
-  factory UserDto.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory UserDto.fromJson(Map<String, dynamic> json) {
     return UserDto(
-      id: doc.id,
-      name: data['name'] as String? ?? '',
-      username: data['username'] as String? ?? '',
-      avatarUrl: data['avatarUrl'] as String? ?? '',
+      id: json['id'].toString(),
+      name: json['name'] as String? ?? '',
+      username: json['username'] as String? ?? '',
+      avatarUrl: json['profile_picture_url'] as String? ?? '',
     );
   }
-
-  Map<String, dynamic> toMap() => {
-        'name': name,
-        'username': username,
-        'avatarUrl': avatarUrl,
-      };
 
   UserEntity toEntity() => UserEntity(
         id: id,

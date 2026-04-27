@@ -1,76 +1,117 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../data/datasources/api_client.dart';
+import '../providers/di_providers.dart';
 import '../providers/optimistic_feed_provider.dart';
 import '../widgets/post_card.dart';
 import '../widgets/post_card_skeleton.dart';
 import '../widgets/create_post_card.dart';
-import '../../services/firestore_seed_service.dart';
-import '../../services/mock_data_service.dart';
 import '../../utils/responsive_layout.dart';
 import '../widgets/user_avatar.dart';
 
-class FeedScreen extends ConsumerWidget {
-  const FeedScreen({super.key});
+/// Entry point for the feed module.
+///
+/// Pass [authToken] and [currentUserId] so the module can authenticate API
+/// requests and attribute new posts/comments to the correct user.
+class FeedScreen extends StatefulWidget {
+  final String? authToken;
+  final String currentUserId;
+  final String currentUserName;
+  final String? currentUserAvatarUrl;
 
-  Future<void> _handleManualSeed(BuildContext context) async {
-    try {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Seeding Firestore...')));
-      await FirestoreSeedService().seedIfNeeded(force: true);
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Seeding complete!')));
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
-      }
-    }
+  const FeedScreen({
+    super.key,
+    this.authToken,
+    this.currentUserId = '',
+    this.currentUserName = '',
+    this.currentUserAvatarUrl,
+  });
+
+  @override
+  State<FeedScreen> createState() => _FeedScreenState();
+}
+
+class _FeedScreenState extends State<FeedScreen> {
+  late final ProviderContainer _container;
+
+  @override
+  void initState() {
+    super.initState();
+    _container = ProviderContainer(
+      overrides: [
+        apiClientProvider.overrideWith(
+          (ref) => ApiClient(tokenProvider: () => widget.authToken),
+        ),
+        currentUserIdProvider.overrideWithValue(widget.currentUserId),
+        currentUserNameProvider.overrideWithValue(widget.currentUserName),
+        currentUserAvatarUrlProvider.overrideWithValue(
+          'https://i.pravatar.cc/150?u=${widget.currentUserId}',
+        ),
+      ],
+    );
   }
 
-  void _showCreatePostSheet(BuildContext context) {
+  @override
+  void dispose() {
+    _container.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return UncontrolledProviderScope(
+      container: _container,
+      child: const _FeedScreenBody(),
+    );
+  }
+}
+
+class _FeedScreenBody extends ConsumerWidget {
+  const _FeedScreenBody();
+
+  void _showCreatePostSheet(BuildContext context, WidgetRef ref) {
+    final container = ProviderScope.containerOf(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.95,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        builder: (context, scrollController) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            children: [
-              const SizedBox(height: 12),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDEDEDE),
-                  borderRadius: BorderRadius.circular(2),
+      builder: (sheetContext) => UncontrolledProviderScope(
+        container: container,
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.95,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (sheetContext, scrollController) => Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              children: [
+                const SizedBox(height: 12),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDEDEDE),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-              ),
-              Expanded(
-                child: CustomScrollView(
-                  controller: scrollController,
-                  slivers: [
-                    SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: const CreatePostCard(),
-                    ),
-                  ],
+                Expanded(
+                  child: CustomScrollView(
+                    controller: scrollController,
+                    slivers: [
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: const CreatePostCard(),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -84,29 +125,9 @@ class FeedScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      // appBar: AppBar(
-      //   title: Text(
-      //     'Social Feed',
-      //     style: GoogleFonts.inter(
-      //       fontWeight: FontWeight.bold,
-      //       color: Colors.black,
-      //     ),
-      //   ),
-      //   actions: [
-      //     IconButton(
-      //       icon: const Icon(Icons.refresh, color: Colors.black),
-      //       onPressed: () => _handleManualSeed(context),
-      //       tooltip: 'Seed Data',
-      //     ),
-      //   ],
-      //   backgroundColor: Colors.white,
-      //   elevation: 0,
-      //   centerTitle: true,
-      // ),
       floatingActionButton: isMobile
           ? FloatingActionButton(
-              onPressed: () => _showCreatePostSheet(context),
-
+              onPressed: () => _showCreatePostSheet(context, ref),
               backgroundColor: const Color(0xFF4535C1),
               child: const Icon(Icons.add),
             )
@@ -115,7 +136,6 @@ class FeedScreen extends ConsumerWidget {
         child: Container(
           constraints: const BoxConstraints(maxWidth: 600),
           child: feedAsync.when(
-            // ── Loading: 3 skeleton cards ─────────────────────────────────
             loading: () => ListView.builder(
               itemCount: 4,
               padding: const EdgeInsets.only(bottom: 24),
@@ -123,7 +143,7 @@ class FeedScreen extends ConsumerWidget {
                 if (i == 0) {
                   return isMobile
                       ? GestureDetector(
-                          onTap: () => _showCreatePostSheet(context),
+                          onTap: () => _showCreatePostSheet(context, ref),
                           child: const MobileCreatePostTrigger(),
                         )
                       : const CreatePostCard();
@@ -131,8 +151,6 @@ class FeedScreen extends ConsumerWidget {
                 return const PostCardSkeleton();
               },
             ),
-
-            // ── Error ──────────────────────────────────────────────────────
             error: (err, _) => Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -162,8 +180,6 @@ class FeedScreen extends ConsumerWidget {
                 ],
               ),
             ),
-
-            // ── Data: live feed from Firestore ─────────────────────────────
             data: (posts) => ListView.builder(
               itemCount: posts.length + 1,
               padding: const EdgeInsets.only(bottom: 24),
@@ -171,13 +187,11 @@ class FeedScreen extends ConsumerWidget {
                 if (index == 0) {
                   return isMobile
                       ? GestureDetector(
-                          onTap: () => _showCreatePostSheet(context),
+                          onTap: () => _showCreatePostSheet(context, ref),
                           child: const MobileCreatePostTrigger(),
                         )
                       : const CreatePostCard();
                 }
-
-                // Convert PostEntity → Post (old model) for existing widgets
                 final entity = posts[index - 1];
                 return PostCard(post: entity.toLegacy());
               },
@@ -189,12 +203,13 @@ class FeedScreen extends ConsumerWidget {
   }
 }
 
-class MobileCreatePostTrigger extends StatelessWidget {
+class MobileCreatePostTrigger extends ConsumerWidget {
   const MobileCreatePostTrigger({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final currentUser = MockDataService.users[1]; // Using Sara Hany for demo
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentUserName = ref.read(currentUserNameProvider);
+    final currentUserAvatar = ref.read(currentUserAvatarUrlProvider);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -207,11 +222,11 @@ class MobileCreatePostTrigger extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          UserAvatar(url: currentUser.avatarUrl),
+          UserAvatar(url: currentUserAvatar ?? ''),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              "What are you working on, ${currentUser.name.split(' ')[0]}?",
+              "What are you working on, ${currentUserName.split(' ')[0]}?",
               style: GoogleFonts.inter(
                 fontSize: 16,
                 color: const Color(0xFF787878),

@@ -21,7 +21,7 @@ class RepostPreviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = MockDataService.getUserById(post.userId);
+    final user = post.user ?? MockDataService.getUserById(post.userId);
     final isCurrentUser = user?.id == '2';
     final isMobile = ResponsiveLayout.isMobile(context);
 

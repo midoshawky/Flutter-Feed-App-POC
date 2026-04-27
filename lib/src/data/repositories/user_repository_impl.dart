@@ -1,9 +1,9 @@
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/user_repository.dart';
-import '../datasources/feed_remote_datasource.dart';
+import '../datasources/feed_api_datasource.dart';
 
 class UserRepositoryImpl implements UserRepository {
-  final FeedRemoteDataSource _datasource;
+  final FeedApiDataSource _datasource;
   final Map<String, UserEntity> _cache = {};
 
   UserRepositoryImpl(this._datasource);

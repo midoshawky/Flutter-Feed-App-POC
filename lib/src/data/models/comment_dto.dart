@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/comment_entity.dart';
 
 class CommentDto {
@@ -20,36 +19,22 @@ class CommentDto {
     this.replies = const [],
   });
 
-  factory CommentDto.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory CommentDto.fromJson(Map<String, dynamic> json) {
+    final user = json['user'] as Map<String, dynamic>?;
     return CommentDto(
-      id: doc.id,
-      userId: data['userId'] as String? ?? '',
-      userName: data['userName'] as String? ?? '',
-      text: data['text'] as String? ?? '',
-      timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      likesCount: (data['likesCount'] as int?) ?? 0,
+      id: json['id'].toString(),
+      userId: json['user_id'].toString(),
+      userName: user?['name'] as String? ?? '',
+      text: json['text'] as String? ?? '',
+      likesCount: (json['likes_count'] as num?)?.toInt() ?? 0,
+      timestamp: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      replies: (json['replies'] as List? ?? [])
+          .map((r) => CommentDto.fromJson(r as Map<String, dynamic>))
+          .toList(),
     );
   }
-
-  factory CommentDto.fromMap(String id, Map<String, dynamic> data) {
-    return CommentDto(
-      id: id,
-      userId: data['userId'] as String? ?? '',
-      userName: data['userName'] as String? ?? '',
-      text: data['text'] as String? ?? '',
-      timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      likesCount: (data['likesCount'] as int?) ?? 0,
-    );
-  }
-
-  Map<String, dynamic> toMap() => {
-        'userId': userId,
-        'userName': userName,
-        'text': text,
-        'timestamp': Timestamp.fromDate(timestamp),
-        'likesCount': likesCount,
-      };
 
   CommentEntity toEntity() {
     return CommentEntity(

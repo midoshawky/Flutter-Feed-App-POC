@@ -1,5 +1,3 @@
-import 'package:uuid/uuid.dart';
-
 class Comment {
   final String id;
   final String userId;
@@ -17,7 +15,7 @@ class Comment {
     required this.timestamp,
     this.replies = const [],
     this.likesCount = 0,
-  }) : id = id ?? const Uuid().v4();
+  }) : id = id ?? DateTime.now().millisecondsSinceEpoch.toString();
 
   Comment copyWith({
     List<Comment>? replies,

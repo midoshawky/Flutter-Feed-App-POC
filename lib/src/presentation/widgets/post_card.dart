@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import '../../models/comment.dart';
 import '../../models/post.dart';
@@ -26,12 +27,15 @@ class _PostCardState extends State<PostCard> {
   void _showCommentSheet(BuildContext context) {
     Comment? replyingTo;
     String? topLevelCommentId;
+    final container = ProviderScope.containerOf(context);
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
+      builder: (sheetContext) => UncontrolledProviderScope(
+        container: container,
+        child: StatefulBuilder(
         builder: (context, setSheetState) => DraggableScrollableSheet(
           initialChildSize: 0.75,
           minChildSize: 0.5,
@@ -135,12 +139,13 @@ class _PostCardState extends State<PostCard> {
           ),
         ),
       ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = MockDataService.getUserById(widget.post.userId);
+    final user = widget.post.user ?? MockDataService.getUserById(widget.post.userId);
     final isMobile = ResponsiveLayout.isMobile(context);
 
     return Card(

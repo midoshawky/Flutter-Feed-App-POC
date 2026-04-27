@@ -7,6 +7,7 @@ import 'package:fluttertagger/fluttertagger.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../domain/entities/post_entity.dart';
 import '../providers/di_providers.dart';
+import '../providers/optimistic_feed_provider.dart';
 import '../../services/mock_data_service.dart';
 import 'user_avatar.dart';
 
@@ -98,19 +99,18 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
 
     try {
       final tags = _controller.tags.map((t) => '#${t.text}').toList();
+      final userId = ref.read(currentUserIdProvider);
 
-      await ref
-          .read(createPostUseCaseProvider)
-          .call(
-            userId: '2', // Mocking current user as 'Sara Hany' (id: 2) for now
+      await ref.read(optimisticFeedProvider.notifier).createPost(
+            userId: userId.isNotEmpty ? userId : '2',
             content: text,
             type: _attachedMedia.isEmpty
                 ? PostTypeEntity.text
                 : _attachedMedia.length == 1
-                ? PostTypeEntity.image
-                : PostTypeEntity.multiImage,
+                    ? PostTypeEntity.image
+                    : PostTypeEntity.multiImage,
             tags: tags,
-            mediaBytes: _attachedMedia,
+            mediaBytes: List.from(_attachedMedia),
           );
 
       // Success: Reset state
@@ -134,7 +134,10 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = MockDataService.users[1]; // Using Sara Hany for demo
+    final currentUser = ref.watch(currentUserNameProvider);
+    final currentUserAvatar = ref.watch(currentUserAvatarUrlProvider);
+    final currentUserId = ref.watch(currentUserIdProvider);
+
 
     final isMobile = ResponsiveLayout.isMobile(context);
 
@@ -195,7 +198,7 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
                         }) => null,
                     decoration: InputDecoration(
                       hintText:
-                          "What are you working on, ${currentUser.name.split(' ')[0]}?",
+                          "What are you working on, ${currentUser.split(' ')[0]}?",
                       hintStyle: TextStyle(
                         fontSize: 20,
                         color: const Color(0xFF787878),
@@ -216,7 +219,7 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
               final rowChild = Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  UserAvatar(url: currentUser.avatarUrl),
+                  UserAvatar(url: currentUserAvatar ?? ''),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(

@@ -1,6 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/post_entity.dart';
 import 'comment_dto.dart';
+import 'user_dto.dart';
 
 class PostDto {
   final String id;
@@ -9,12 +9,15 @@ class PostDto {
   final String? imageUrl;
   final List<String> mediaUrls;
   final List<String> tags;
-  final String type; // stored as string in Firestore
+  final String type;
   final int likesCount;
   final int repostsCount;
   final DateTime timestamp;
   final String? repostedFromId;
   final List<CommentDto> comments;
+  final bool isLiked;
+  final UserDto? userDto;
+  final PostDto? repostedFromDto;
 
   const PostDto({
     required this.id,
@@ -29,37 +32,48 @@ class PostDto {
     required this.timestamp,
     this.repostedFromId,
     this.comments = const [],
+    this.isLiked = false,
+    this.userDto,
+    this.repostedFromDto,
   });
 
-  factory PostDto.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory PostDto.fromJson(Map<String, dynamic> json) {
+    final mediaList = (json['media'] as List? ?? []);
+    final mediaUrls = mediaList
+        .map((m) => (m as Map<String, dynamic>)['url'] as String? ?? '')
+        .where((url) => url.isNotEmpty)
+        .toList();
+
+    final userJson = json['user'] as Map<String, dynamic>?;
+    final repostedFromJson = json['reposted_from'] as Map<String, dynamic>?;
+
     return PostDto(
-      id: doc.id,
-      userId: data['userId'] as String? ?? '',
-      content: data['content'] as String? ?? '',
-      imageUrl: data['imageUrl'] as String?,
-      mediaUrls: List<String>.from(data['mediaUrls'] as List? ?? []),
-      tags: List<String>.from(data['tags'] as List? ?? []),
-      type: data['type'] as String? ?? 'text',
-      likesCount: (data['likesCount'] as int?) ?? 0,
-      repostsCount: (data['repostsCount'] as int?) ?? 0,
-      timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      repostedFromId: data['repostedFromId'] as String?,
+      id: json['id'].toString(),
+      userId: json['user_id'].toString(),
+      content: json['content'] as String? ?? '',
+      imageUrl: mediaUrls.isNotEmpty ? mediaUrls.first : null,
+      mediaUrls: mediaUrls,
+      tags: (json['tags'] as List? ?? [])
+          .map((t) => (t as Map<String, dynamic>)['name'] as String? ?? '')
+          .where((s) => s.isNotEmpty)
+          .toList(),
+      type: json['type'] as String? ?? 'text',
+      likesCount: (json['likes_count'] as num?)?.toInt() ?? 0,
+      repostsCount: (json['reposts_count'] as num?)?.toInt() ?? 0,
+      isLiked: json['is_liked'] as bool? ?? false,
+      timestamp: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      repostedFromId: json['reposted_from_id']?.toString(),
+      comments: (json['comments'] as List? ?? [])
+          .map((c) => CommentDto.fromJson(c as Map<String, dynamic>))
+          .toList(),
+      userDto: userJson != null ? UserDto.fromJson(userJson) : null,
+      repostedFromDto: repostedFromJson != null
+          ? PostDto.fromJson(repostedFromJson)
+          : null,
     );
   }
-
-  Map<String, dynamic> toMap() => {
-        'userId': userId,
-        'content': content,
-        if (imageUrl != null) 'imageUrl': imageUrl,
-        'mediaUrls': mediaUrls,
-        'tags': tags,
-        'type': type,
-        'likesCount': likesCount,
-        'repostsCount': repostsCount,
-        'timestamp': Timestamp.fromDate(timestamp),
-        if (repostedFromId != null) 'repostedFromId': repostedFromId,
-      };
 
   static PostTypeEntity _typeFromString(String s) {
     switch (s) {
@@ -87,7 +101,7 @@ class PostDto {
     }
   }
 
-  PostEntity toEntity({bool isLiked = false, PostEntity? repostedFrom}) {
+  PostEntity toEntity({bool? isLiked, PostEntity? repostedFrom}) {
     return PostEntity(
       id: id,
       userId: userId,
@@ -100,8 +114,9 @@ class PostDto {
       repostsCount: repostsCount,
       comments: comments.map((c) => c.toEntity()).toList(),
       timestamp: timestamp,
-      isLiked: isLiked,
+      isLiked: isLiked ?? this.isLiked,
       repostedFrom: repostedFrom,
+      user: userDto?.toEntity(),
     );
   }
 }

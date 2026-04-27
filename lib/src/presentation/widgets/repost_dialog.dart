@@ -3,28 +3,35 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertagger/fluttertagger.dart';
 import '../../models/post.dart';
 import '../../domain/entities/post_entity.dart';
+import '../providers/di_providers.dart';
 import '../providers/optimistic_feed_provider.dart';
-import '../../services/mock_data_service.dart';
 import 'repost_preview_card.dart';
 import 'user_avatar.dart';
 
 import '../../utils/responsive_layout.dart';
 
 void showRepostDialog(BuildContext context, WidgetRef ref, Post post) {
+  final container = ProviderScope.containerOf(context);
   if (ResponsiveLayout.isMobile(context)) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: _RepostDialog(post: post),
+      builder: (ctx) => UncontrolledProviderScope(
+        container: container,
+        child: Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          child: _RepostDialog(post: post),
+        ),
       ),
     );
   } else {
     showDialog(
       context: context,
-      builder: (ctx) => _RepostDialog(post: post),
+      builder: (ctx) => UncontrolledProviderScope(
+        container: container,
+        child: _RepostDialog(post: post),
+      ),
     );
   }
 }
@@ -73,10 +80,11 @@ class _RepostDialogState extends ConsumerState<_RepostDialog> {
   Future<void> _submit() async {
     setState(() => _isLoading = true);
     try {
+      final userId = ref.read(currentUserIdProvider);
       await ref
           .read(optimisticFeedProvider.notifier)
           .repost(
-            byUserId: '2', // Sara Hany
+            byUserId: userId.isNotEmpty ? userId : '2',
             originalPostId: widget.post.id,
             addedText: _controller.text.trim(),
             originalPost: PostEntity(
@@ -103,7 +111,7 @@ class _RepostDialogState extends ConsumerState<_RepostDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = MockDataService.users[1]; // Sara Hany
+    final currentUserAvatar = ref.read(currentUserAvatarUrlProvider) ?? '';
 
     final isMobile = ResponsiveLayout.isMobile(context);
 
@@ -136,7 +144,7 @@ class _RepostDialogState extends ConsumerState<_RepostDialog> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              UserAvatar(url: currentUser.avatarUrl, radius: 20),
+              UserAvatar(url: currentUserAvatar, radius: 20),
               const SizedBox(width: 12),
               Expanded(
                 child: FlutterTagger(

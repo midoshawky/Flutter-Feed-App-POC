@@ -1,19 +1,16 @@
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'firebase_options.dart';
 import 'package:feed_module/feed_module.dart';
+
+const String _authToken =
+    'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2Rldi1iYWNrZW5kLXNodXdpZXIucG9tYWMuaW5mby9hcGkvYXV0aC9sb2dpbiIsImlhdCI6MTc3NzIxNjc0MywiZXhwIjoxNzc3MjQ5MTQzLCJuYmYiOjE3NzcyMTY3NDMsImp0aSI6ImtQSUVGb1dUTHZlNGgyZkgiLCJzdWIiOiIxOTIiLCJwcnYiOiIyM2JkNWM4OTQ5ZjYwMGFkYjM5ZTcwMWM0MDA4NzJkYjdhNTk3NmY3In0.W_keFtTzO6dCnXOTHbUWLa9QoVls7jot17GU1zjkVkc';
+
+// JWT sub claim → user 192 ("Ahmed" / new_test1258)
+const String _currentUserId = '192';
+const String _currentUserName = 'Ahmed';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // Seed Firestore with mock data on first run (debug builds only)
-  if (kDebugMode) {
-    await FirestoreSeedService().seedIfNeeded();
-  }
-
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -36,7 +33,11 @@ class MyApp extends StatelessWidget {
           surface: Colors.white,
         ),
       ),
-      home: const FeedScreen(),
+      home: const FeedScreen(
+        authToken: _authToken,
+        currentUserId: _currentUserId,
+        currentUserName: _currentUserName,
+      ),
     );
   }
 }
