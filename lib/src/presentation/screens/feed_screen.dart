@@ -39,7 +39,7 @@ class _FeedScreenState extends State<FeedScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     String? effectiveToken = widget.authToken;
     if (kIsWeb) {
       final uri = Uri.base;
@@ -162,35 +162,38 @@ class _FeedScreenBody extends ConsumerWidget {
                 return const PostCardSkeleton();
               },
             ),
-            error: (err, _) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.cloud_off_rounded,
-                    size: 48,
-                    color: Color(0xFF787878),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Could not load feed',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      color: const Color(0xFF333333),
+            error: (err, stack) {
+              print("ERR $stack");
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.cloud_off_rounded,
+                      size: 48,
+                      color: Color(0xFF787878),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    err.toString(),
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: const Color(0xFF787878),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Could not load feed',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        color: const Color(0xFF333333),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
+                    const SizedBox(height: 4),
+                    Text(
+                      err.toString(),
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: const Color(0xFF787878),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
             data: (posts) => ListView.builder(
               itemCount: posts.length + 1,
               padding: const EdgeInsets.only(bottom: 24),

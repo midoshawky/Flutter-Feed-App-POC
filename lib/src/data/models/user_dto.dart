@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../domain/entities/user_entity.dart';
 
 class UserDto {
@@ -21,23 +20,16 @@ class UserDto {
       id: json['id'].toString(),
       name: json['name'] as String? ?? '',
       username: json['username'] as String? ?? '',
-      avatarUrl: _proxifyUrl(json['profile_picture_url'] as String? ?? ''),
+      avatarUrl: json['profile_picture_url'] as String? ?? '',
       isFollowing: json['is_following'] as bool? ?? false,
     );
   }
 
-  static String _proxifyUrl(String url) {
-    if (kIsWeb && url.startsWith('https://dev-backend-shuwier.pomac.info/')) {
-      return url.replaceFirst('https://dev-backend-shuwier.pomac.info/', '/');
-    }
-    return url;
-  }
-
   UserEntity toEntity() => UserEntity(
-        id: id,
-        name: name,
-        username: username,
-        avatarUrl: avatarUrl,
-        isFollowing: isFollowing,
-      );
+    id: id,
+    name: name,
+    username: username,
+    avatarUrl: avatarUrl,
+    isFollowing: isFollowing,
+  );
 }
