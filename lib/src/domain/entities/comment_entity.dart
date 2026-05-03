@@ -31,7 +31,7 @@ class CommentEntity {
     );
   }
 
-  Comment toLegacy() {
+  Comment toLegacy({int depth = 0}) {
     return Comment(
       id: id,
       userId: userId,
@@ -39,7 +39,9 @@ class CommentEntity {
       text: text,
       timestamp: timestamp,
       likesCount: likesCount,
-      replies: replies.map((r) => r.toLegacy()).toList(),
+      replies: (depth < 10)
+          ? replies.map((r) => r.toLegacy(depth: depth + 1)).toList()
+          : [],
     );
   }
 }

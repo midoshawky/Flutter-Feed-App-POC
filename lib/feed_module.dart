@@ -21,5 +21,4 @@ export 'src/presentation/widgets/post_card.dart';
 export 'src/presentation/widgets/create_post_card.dart';
 
 // Export Services
-export 'src/services/firestore_seed_service.dart';
 export 'src/services/mock_data_service.dart';

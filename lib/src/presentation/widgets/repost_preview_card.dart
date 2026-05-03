@@ -4,9 +4,12 @@ import 'package:feed_module/src/models/post.dart';
 import 'package:feed_module/src/services/mock_data_service.dart';
 import 'post_media.dart';
 import 'user_avatar.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/di_providers.dart';
+import '../providers/optimistic_feed_provider.dart';
 
 /// A compact read-only card that embeds the original post inside a repost.
-class RepostPreviewCard extends StatelessWidget {
+class RepostPreviewCard extends ConsumerWidget {
   final Post post;
 
   const RepostPreviewCard({super.key, required this.post});
@@ -20,10 +23,12 @@ class RepostPreviewCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final user = MockDataService.getUserById(post.userId);
-    final isCurrentUser = user?.id == '2';
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = post.user ?? MockDataService.getUserById(post.userId);
+    final currentUserId = ref.watch(currentUserIdProvider);
+    final isCurrentUser = user?.id == currentUserId;
     final isMobile = ResponsiveLayout.isMobile(context);
+    final isFollowing = user?.isFollowing ?? false;
 
     return Container(
       decoration: BoxDecoration(
@@ -43,21 +48,21 @@ class RepostPreviewCard extends StatelessWidget {
                 clipBehavior: Clip.none,
                 children: [
                   UserAvatar(url: user?.avatarUrl ?? ''),
-                  if (isMobile && !isCurrentUser)
+                  if (isMobile && !isCurrentUser && user != null)
                     Positioned(
                       bottom: 0,
                       right: -4,
                       child: GestureDetector(
-                        onTap: () {}, // TODO: follow logic
+                        onTap: () => ref.read(optimisticFeedProvider.notifier).toggleFollow(user.id, isFollowing),
                         child: Container(
                           width: 20,
                           height: 20,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF4535C1),
+                          decoration: BoxDecoration(
+                            color: isFollowing ? Colors.grey : const Color(0xFF4535C1),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
-                            Icons.add,
+                          child: Icon(
+                            isFollowing ? Icons.check : Icons.add,
                             color: Colors.white,
                             size: 14,
                           ),
@@ -76,10 +81,10 @@ class RepostPreviewCard extends StatelessWidget {
                       children: [
                         Text(
                           user?.name ?? 'Unknown',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
-                            color: const Color(0xFF333333),
+                            color: Color(0xFF333333),
                           ),
                         ),
                         const SizedBox(width: 4),
@@ -88,8 +93,8 @@ class RepostPreviewCard extends StatelessWidget {
                             isMobile
                                 ? '• ${_getTimeAgo(post.timestamp)}'
                                 : '${user?.username} • ${_getTimeAgo(post.timestamp)}',
-                            style: TextStyle(
-                              color: const Color(0xFF787878),
+                            style: const TextStyle(
+                              color: Color(0xFF787878),
                               fontSize: 14,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -101,8 +106,8 @@ class RepostPreviewCard extends StatelessWidget {
                     if (isMobile)
                       Text(
                         user?.username ?? 'Unknown',
-                        style: TextStyle(
-                          color: const Color(0xFF787878),
+                        style: const TextStyle(
+                          color: Color(0xFF787878),
                           fontSize: 14,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -113,18 +118,18 @@ class RepostPreviewCard extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (!isMobile && !isCurrentUser)
+                  if (!isMobile && !isCurrentUser && user != null)
                     TextButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(
-                        Icons.add_rounded,
-                        color: Color(0xFF4535C1),
+                      onPressed: () => ref.read(optimisticFeedProvider.notifier).toggleFollow(user.id, isFollowing),
+                      icon: Icon(
+                        isFollowing ? Icons.check_rounded : Icons.add_rounded,
+                        color: isFollowing ? Colors.grey : const Color(0xFF4535C1),
                         size: 20,
                       ),
                       label: Text(
-                        'Follow',
+                        isFollowing ? 'Following' : 'Follow',
                         style: TextStyle(
-                          color: const Color(0xFF4535C1),
+                          color: isFollowing ? Colors.grey : const Color(0xFF4535C1),
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
                         ),
@@ -142,6 +147,7 @@ class RepostPreviewCard extends StatelessWidget {
               ),
             ],
           ),
+          // ...
 
           // Text content
           if (post.content.isNotEmpty) ...[

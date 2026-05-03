@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import '../../models/comment.dart';
 import '../../models/post.dart';
@@ -26,111 +27,115 @@ class _PostCardState extends State<PostCard> {
   void _showCommentSheet(BuildContext context) {
     Comment? replyingTo;
     String? topLevelCommentId;
+    final container = ProviderScope.containerOf(context);
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setSheetState) => DraggableScrollableSheet(
-          initialChildSize: 0.75,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          builder: (context, scrollController) => Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            child: Column(
-              children: [
-                const SizedBox(height: 12),
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDEDEDE),
-                    borderRadius: BorderRadius.circular(2),
+      builder: (sheetContext) => UncontrolledProviderScope(
+        container: container,
+        child: StatefulBuilder(
+          builder: (context, setSheetState) => DraggableScrollableSheet(
+            initialChildSize: 0.75,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            builder: (context, scrollController) => Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDEDEDE),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Comments',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1F1F1F),
-                        ),
-                      ),
-                      if (widget.post.comments.isNotEmpty)
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                    ],
-                  ),
-                ),
-                if (widget.post.comments.isEmpty)
-                  Expanded(
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SvgPicture.asset(
-                            'assets/icons/no-comments.svg',
-                            package: 'feed_module',
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Comments',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1F1F1F),
                           ),
-                          const SizedBox(height: 26),
-                          Text(
-                            'No comments',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Color(0xFF787878),
+                        ),
+                        if (widget.post.comments.isNotEmpty)
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (widget.post.comments.isEmpty)
+                    Expanded(
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SvgPicture.asset(
+                              'assets/icons/no-comments.svg',
+                              package: 'feed_module',
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 26),
+                            Text(
+                              'No comments',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Color(0xFF787878),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                if (widget.post.comments.isNotEmpty)
-                  Expanded(
-                    child: SingleChildScrollView(
-                      controller: scrollController,
-                      padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
-                      child: CommentSection(
-                        post: widget.post,
-                        replyingToId: replyingTo?.id,
-                        onReplyTap: (replyTarget, topLevelId) {
-                          setSheetState(() {
-                            replyingTo = replyTarget;
-                            topLevelCommentId = topLevelId;
-                          });
-                        },
+                  if (widget.post.comments.isNotEmpty)
+                    Expanded(
+                      child: SingleChildScrollView(
+                        controller: scrollController,
+                        padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
+                        child: CommentSection(
+                          post: widget.post,
+                          replyingToId: replyingTo?.id,
+                          onReplyTap: (replyTarget, topLevelId) {
+                            setSheetState(() {
+                              replyingTo = replyTarget;
+                              topLevelCommentId = topLevelId;
+                            });
+                          },
+                        ),
                       ),
                     ),
+                  Padding(
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom,
+                    ),
+                    child: CommentInput(
+                      post: widget.post,
+                      isReply: replyingTo != null,
+                      replyToUsername: replyingTo?.userName.replaceAll(' ', ''),
+                      parentCommentId: topLevelCommentId,
+                      onCancelReply: () {
+                        setSheetState(() {
+                          replyingTo = null;
+                          topLevelCommentId = null;
+                        });
+                      },
+                    ),
                   ),
-                Padding(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).viewInsets.bottom,
-                  ),
-                  child: CommentInput(
-                    post: widget.post,
-                    isReply: replyingTo != null,
-                    replyToUsername: replyingTo?.userName.replaceAll(' ', ''),
-                    parentCommentId: topLevelCommentId,
-                    onCancelReply: () {
-                      setSheetState(() {
-                        replyingTo = null;
-                        topLevelCommentId = null;
-                      });
-                    },
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -140,12 +145,15 @@ class _PostCardState extends State<PostCard> {
 
   @override
   Widget build(BuildContext context) {
-    final user = MockDataService.getUserById(widget.post.userId);
+    print("widget.post: ${widget.post.mediaUrls}");
+    final user =
+        widget.post.user ?? MockDataService.getUserById(widget.post.userId);
     final isMobile = ResponsiveLayout.isMobile(context);
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       elevation: 0,
+      color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: const BorderSide(color: Color(0xFFDEDEDE)),
@@ -155,8 +163,7 @@ class _PostCardState extends State<PostCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (user != null)
-              PostHeader(user: user, timestamp: widget.post.timestamp),
+            if (user != null) PostHeader(post: widget.post),
             const SizedBox(height: 12),
             // Reposter's own added text (if any)
             if (widget.post.content.isNotEmpty &&

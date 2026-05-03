@@ -1,9 +1,9 @@
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/user_repository.dart';
-import '../datasources/feed_remote_datasource.dart';
+import '../datasources/feed_api_datasource.dart';
 
 class UserRepositoryImpl implements UserRepository {
-  final FeedRemoteDataSource _datasource;
+  final FeedApiDataSource _datasource;
   final Map<String, UserEntity> _cache = {};
 
   UserRepositoryImpl(this._datasource);
@@ -22,5 +22,21 @@ class UserRepositoryImpl implements UserRepository {
   Future<List<UserEntity>> getUsers(List<String> ids) async {
     final dtos = await _datasource.getUsers(ids);
     return dtos.map((d) => d.toEntity()).toList();
+  }
+
+  @override
+  Future<void> followUser(String userId) async {
+    final user = await getUserById(userId);
+    if (user != null) {
+      await _datasource.toggleFollow(user.username);
+    }
+  }
+
+  @override
+  Future<void> unfollowUser(String userId) async {
+    final user = await getUserById(userId);
+    if (user != null) {
+      await _datasource.toggleFollow(user.username);
+    }
   }
 }

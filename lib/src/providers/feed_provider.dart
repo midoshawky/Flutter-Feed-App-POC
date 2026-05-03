@@ -85,4 +85,30 @@ class FeedNotifier extends Notifier<List<Post>> {
 
     state = [repostEntry, ...state];
   }
+
+  void editPost(String postId, String newContent) {
+    state = [
+      for (final post in state)
+        if (post.id == postId)
+          post.copyWith(content: newContent)
+        else
+          post,
+    ];
+  }
+
+  void deletePost(String postId) {
+    state = state.where((post) => post.id != postId).toList();
+  }
+
+  void toggleFollow(String userId) {
+    state = [
+      for (final post in state)
+        if (post.userId == userId)
+          post.copyWith(
+            user: post.user?.copyWith(isFollowing: !post.user!.isFollowing),
+          )
+        else
+          post,
+    ];
+  }
 }

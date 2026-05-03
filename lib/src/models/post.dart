@@ -1,5 +1,5 @@
-import 'package:uuid/uuid.dart';
 import 'comment.dart';
+import 'user.dart';
 
 enum PostType { text, image, video, multiImage }
 
@@ -14,10 +14,11 @@ class Post {
   final int likesCount;
   final int repostsCount;
   final List<Comment> comments;
+  final int commentsCount;
   final DateTime timestamp;
   final bool isLiked;
-  // When this post is a repost, this holds the original post
   final Post? repostedFrom;
+  final User? user;
 
   Post({
     String? id,
@@ -30,22 +31,27 @@ class Post {
     this.likesCount = 0,
     this.repostsCount = 0,
     this.comments = const [],
+    this.commentsCount = 0,
     required this.timestamp,
     this.isLiked = false,
     this.repostedFrom,
-  }) : id = id ?? const Uuid().v4();
+    this.user,
+  }) : id = id ?? DateTime.now().millisecondsSinceEpoch.toString();
 
   Post copyWith({
+    String? content,
     int? likesCount,
     int? repostsCount,
     List<Comment>? comments,
+    int? commentsCount,
     bool? isLiked,
     Post? repostedFrom,
+    User? user,
   }) {
     return Post(
       id: id,
       userId: userId,
-      content: content,
+      content: content ?? this.content,
       imageUrl: imageUrl,
       mediaUrls: mediaUrls,
       tags: tags,
@@ -53,9 +59,11 @@ class Post {
       likesCount: likesCount ?? this.likesCount,
       repostsCount: repostsCount ?? this.repostsCount,
       comments: comments ?? this.comments,
+      commentsCount: commentsCount ?? this.commentsCount,
       timestamp: timestamp,
       isLiked: isLiked ?? this.isLiked,
       repostedFrom: repostedFrom ?? this.repostedFrom,
+      user: user,
     );
   }
 }

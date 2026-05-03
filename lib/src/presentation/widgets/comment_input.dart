@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/post.dart';
 import '../../domain/entities/comment_entity.dart';
+import '../providers/di_providers.dart';
 import '../providers/optimistic_feed_provider.dart';
 import '../../services/mock_data_service.dart';
 import '../../utils/responsive_layout.dart';
@@ -51,10 +52,12 @@ class _CommentInputState extends ConsumerState<CommentInput> {
 
     setState(() => _isLoading = true);
 
+    final userId = ref.read(currentUserIdProvider);
+    final userName = ref.read(currentUserNameProvider);
     final comment = CommentEntity(
-      id: '', // Firestore will generate
-      userId: '2', // Sara Hany
-      userName: MockDataService.users[1].name,
+      id: '',
+      userId: userId.isNotEmpty ? userId : '2',
+      userName: userName.isNotEmpty ? userName : MockDataService.users[1].name,
       text: text,
       timestamp: DateTime.now(),
     );
