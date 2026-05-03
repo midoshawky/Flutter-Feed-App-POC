@@ -33,6 +33,7 @@ class PostMedia extends StatelessWidget {
               fit: BoxFit.cover,
               height: 320,
               width: double.infinity,
+              headers: {'Access-Control-Allow-Origin': '*'},
               errorBuilder: (_, __, ___) => Container(
                 height: 320,
                 width: double.infinity,
@@ -151,6 +152,7 @@ class PostMedia extends StatelessWidget {
         child: Image.network(
           urls[index],
           fit: BoxFit.cover,
+          headers: {'Access-Control-Allow-Origin': '*'},
           width: double.infinity,
           height: double.infinity,
           errorBuilder: (_, __, ___) => Container(color: Colors.grey[300]),
