@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../data/datasources/api_client.dart';
 import '../providers/di_providers.dart';
 import '../providers/optimistic_feed_provider.dart';
@@ -38,10 +39,19 @@ class _FeedScreenState extends State<FeedScreen> {
   @override
   void initState() {
     super.initState();
+    
+    String? effectiveToken = widget.authToken;
+    if (kIsWeb) {
+      final uri = Uri.base;
+      if (uri.queryParameters.containsKey('token')) {
+        effectiveToken = uri.queryParameters['token'];
+      }
+    }
+
     _container = ProviderContainer(
       overrides: [
         apiClientProvider.overrideWith(
-          (ref) => ApiClient(tokenProvider: () => widget.authToken),
+          (ref) => ApiClient(tokenProvider: () => effectiveToken),
         ),
         currentUserIdProvider.overrideWithValue(widget.currentUserId),
         currentUserNameProvider.overrideWithValue(widget.currentUserName),
