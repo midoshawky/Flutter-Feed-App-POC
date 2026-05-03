@@ -41,10 +41,19 @@ class _FeedScreenState extends State<FeedScreen> {
     super.initState();
     
     String? effectiveToken = widget.authToken;
+    String effectiveUserId = widget.currentUserId;
+    String effectiveUserName = widget.currentUserName;
+
     if (kIsWeb) {
       final uri = Uri.base;
       if (uri.queryParameters.containsKey('token')) {
         effectiveToken = uri.queryParameters['token'];
+      }
+      if (uri.queryParameters.containsKey('user_id')) {
+        effectiveUserId = uri.queryParameters['user_id']!;
+      }
+      if (uri.queryParameters.containsKey('user_name')) {
+        effectiveUserName = uri.queryParameters['user_name']!;
       }
     }
 
@@ -53,10 +62,10 @@ class _FeedScreenState extends State<FeedScreen> {
         apiClientProvider.overrideWith(
           (ref) => ApiClient(tokenProvider: () => effectiveToken),
         ),
-        currentUserIdProvider.overrideWithValue(widget.currentUserId),
-        currentUserNameProvider.overrideWithValue(widget.currentUserName),
+        currentUserIdProvider.overrideWithValue(effectiveUserId),
+        currentUserNameProvider.overrideWithValue(effectiveUserName),
         currentUserAvatarUrlProvider.overrideWithValue(
-          'https://i.pravatar.cc/150?u=${widget.currentUserId}',
+          'https://i.pravatar.cc/150?u=$effectiveUserId',
         ),
       ],
     );
