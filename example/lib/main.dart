@@ -30,6 +30,7 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFFF7F7F7),
         cardColor: Colors.white,
         cardTheme: CardThemeData(color: Colors.white),
+        dialogTheme: DialogThemeData(backgroundColor: Colors.white),
         primaryColor: const Color(0xFF4535C1),
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF4535C1),

@@ -124,9 +124,10 @@ class _RepostDialogState extends ConsumerState<_RepostDialog> {
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             )
           : null,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (isMobile) ...[
             Center(
@@ -288,7 +289,8 @@ class _RepostDialogState extends ConsumerState<_RepostDialog> {
           ),
         ],
       ),
-    );
+    ),
+  );
 
     if (isMobile) return content;
 
