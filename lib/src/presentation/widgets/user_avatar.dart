@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'web_safe_image.dart';
 
 class UserAvatar extends StatelessWidget {
   final String url;
@@ -8,11 +9,24 @@ class UserAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CircleAvatar(
-      radius: radius,
-      backgroundColor: Colors.grey[200],
-      backgroundImage: NetworkImage(url),
-      child: url.isEmpty ? const Icon(Icons.person, color: Colors.grey) : null,
+    return Container(
+      width: radius * 2,
+      height: radius * 2,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        shape: BoxShape.circle,
+      ),
+      child: ClipOval(
+        child: url.isEmpty
+            ? const Icon(Icons.person, color: Colors.grey)
+            : WebSafeImage(
+                url: url,
+                width: radius * 2,
+                height: radius * 2,
+                fit: BoxFit.cover,
+                errorWidget: const Icon(Icons.person, color: Colors.grey),
+              ),
+      ),
     );
   }
 }

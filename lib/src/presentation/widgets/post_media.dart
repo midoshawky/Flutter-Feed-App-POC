@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/post.dart';
 import 'image_slider_preview.dart';
+import 'web_safe_image.dart';
 
 class PostMedia extends StatelessWidget {
   final Post post;
@@ -28,18 +29,11 @@ class PostMedia extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: Image.network(
-              url,
+            child: WebSafeImage(
+              url: url,
               fit: BoxFit.cover,
               height: 320,
               width: double.infinity,
-              headers: {'Access-Control-Allow-Origin': '*'},
-              errorBuilder: (_, __, ___) => Container(
-                height: 320,
-                width: double.infinity,
-                color: Colors.grey[300],
-                child: const Icon(Icons.error, color: Colors.grey),
-              ),
             ),
           ),
           if (isVideo)
@@ -149,13 +143,11 @@ class PostMedia extends StatelessWidget {
       onTap: () => _openSlider(context, urls, index),
       child: ClipRRect(
         borderRadius: borderRadius,
-        child: Image.network(
-          urls[index],
+        child: WebSafeImage(
+          url: urls[index],
           fit: BoxFit.cover,
-          headers: {'Access-Control-Allow-Origin': '*'},
           width: double.infinity,
           height: double.infinity,
-          errorBuilder: (_, __, ___) => Container(color: Colors.grey[300]),
         ),
       ),
     );
