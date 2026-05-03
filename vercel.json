@@ -3,6 +3,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://dev-backend-shuwier.pomac.info/:path*"
+    },
+    {
+      "source": "/storage/:path*",
+      "destination": "https://dev-backend-shuwier.pomac.info/storage/:path*"
     }
   ]
 }
