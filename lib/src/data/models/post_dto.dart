@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../domain/entities/post_entity.dart';
 import 'comment_dto.dart';
 import 'user_dto.dart';
@@ -74,7 +73,7 @@ class PostDto {
     }
     final mediaList = (json['media'] as List? ?? []);
     final mediaUrls = mediaList
-        .map((m) => _proxifyUrl((m as Map<String, dynamic>)['file_url'] as String? ?? ''))
+        .map((m) => (m as Map<String, dynamic>)['file_url'] as String? ?? '')
         .where((url) => url.isNotEmpty)
         .toList();
 
@@ -153,11 +152,5 @@ class PostDto {
       repostedFrom: repostedFrom,
       user: userDto?.toEntity(),
     );
-  }
-  static String _proxifyUrl(String url) {
-    if (kIsWeb && url.startsWith('https://dev-backend-shuwier.pomac.info/')) {
-      return url.replaceFirst('https://dev-backend-shuwier.pomac.info/', '/');
-    }
-    return url;
   }
 }
