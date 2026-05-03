@@ -16,6 +16,7 @@ class PostEntity {
   final int likesCount;
   final int repostsCount;
   final List<CommentEntity> comments;
+  final int commentsCount;
   final DateTime timestamp;
   final bool isLiked;
   final PostEntity? repostedFrom;
@@ -32,6 +33,7 @@ class PostEntity {
     this.likesCount = 0,
     this.repostsCount = 0,
     this.comments = const [],
+    this.commentsCount = 0,
     required this.timestamp,
     this.isLiked = false,
     this.repostedFrom,
@@ -39,31 +41,42 @@ class PostEntity {
   });
 
   PostEntity copyWith({
+    String? id,
+    String? userId,
+    String? content,
+    String? imageUrl,
+    List<String>? mediaUrls,
+    List<String>? tags,
+    PostTypeEntity? type,
     int? likesCount,
     int? repostsCount,
     List<CommentEntity>? comments,
+    int? commentsCount,
+    DateTime? timestamp,
     bool? isLiked,
     PostEntity? repostedFrom,
+    UserEntity? user,
   }) {
     return PostEntity(
-      id: id,
-      userId: userId,
-      content: content,
-      imageUrl: imageUrl,
-      mediaUrls: mediaUrls,
-      tags: tags,
-      type: type,
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      content: content ?? this.content,
+      imageUrl: imageUrl ?? this.imageUrl,
+      mediaUrls: mediaUrls ?? this.mediaUrls,
+      tags: tags ?? this.tags,
+      type: type ?? this.type,
       likesCount: likesCount ?? this.likesCount,
       repostsCount: repostsCount ?? this.repostsCount,
       comments: comments ?? this.comments,
-      timestamp: timestamp,
+      commentsCount: commentsCount ?? this.commentsCount,
+      timestamp: timestamp ?? this.timestamp,
       isLiked: isLiked ?? this.isLiked,
       repostedFrom: repostedFrom ?? this.repostedFrom,
-      user: user,
+      user: user ?? this.user,
     );
   }
 
-  Post toLegacy() {
+  Post toLegacy({int depth = 0}) {
     return Post(
       id: id,
       userId: userId,
@@ -74,16 +87,20 @@ class PostEntity {
       type: PostType.values[type.index],
       likesCount: likesCount,
       repostsCount: repostsCount,
-      comments: comments.map((c) => c.toLegacy()).toList(),
+      comments: comments.map((c) => c.toLegacy(depth: depth + 1)).toList(),
+      commentsCount: commentsCount,
       timestamp: timestamp,
       isLiked: isLiked,
-      repostedFrom: repostedFrom?.toLegacy(),
+      repostedFrom: (depth < 5 && repostedFrom != null)
+          ? repostedFrom!.toLegacy(depth: depth + 1)
+          : null,
       user: user != null
           ? User(
               id: user!.id,
               name: user!.name,
               username: user!.username,
               avatarUrl: user!.avatarUrl,
+              isFollowing: user!.isFollowing,
             )
           : null,
     );

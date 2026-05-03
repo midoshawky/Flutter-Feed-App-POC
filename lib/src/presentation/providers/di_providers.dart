@@ -10,6 +10,9 @@ import '../../domain/usecases/create_post_usecase.dart';
 import '../../domain/usecases/toggle_like_usecase.dart';
 import '../../domain/usecases/repost_usecase.dart';
 import '../../domain/usecases/comment_usecases.dart';
+import '../../domain/usecases/update_post_usecase.dart';
+import '../../domain/usecases/delete_post_usecase.dart';
+import '../../domain/usecases/follow_user_usecase.dart';
 
 /// Bearer token for API auth. Overridden by FeedScreen via its authToken param.
 final authTokenProvider = Provider<String?>((ref) => null);
@@ -63,4 +66,16 @@ final addCommentUseCaseProvider = Provider<AddCommentUseCase>((ref) {
 
 final addReplyUseCaseProvider = Provider<AddReplyUseCase>((ref) {
   return AddReplyUseCase(ref.watch(postRepositoryProvider));
+});
+
+final updatePostUseCaseProvider = Provider<UpdatePostUseCase>((ref) {
+  return UpdatePostUseCase(ref.watch(postRepositoryProvider));
+});
+
+final deletePostUseCaseProvider = Provider<DeletePostUseCase>((ref) {
+  return DeletePostUseCase(ref.watch(postRepositoryProvider));
+});
+
+final followUserUseCaseProvider = Provider<FollowUserUseCase>((ref) {
+  return FollowUserUseCase(ref.watch(userRepositoryProvider));
 });

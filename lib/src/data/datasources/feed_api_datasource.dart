@@ -19,30 +19,27 @@ class FeedApiDataSource {
       queryParameters: {'per_page': limit},
     );
     final List<dynamic> items = response.data['data'] as List? ?? [];
-    final posts = <PostDto>[];
-    for (final item in items) {
+    
+    // Parse initial DTOs and cache users
+    final initialPosts = items.map((item) {
       final json = item as Map<String, dynamic>;
       _cacheUserFromJson(json['user'] as Map<String, dynamic>?);
-      final dto = PostDto.fromJson(json);
-      final comments = await getPostComments(dto.id);
-      posts.add(PostDto(
-        id: dto.id,
-        userId: dto.userId,
-        content: dto.content,
-        imageUrl: dto.imageUrl,
-        mediaUrls: dto.mediaUrls,
-        tags: dto.tags,
-        type: dto.type,
-        userDto: dto.userDto,
-        likesCount: dto.likesCount,
-        repostsCount: dto.repostsCount,
-        timestamp: dto.timestamp,
-        repostedFromId: dto.repostedFromId,
-        isLiked: dto.isLiked,
-        comments: comments,
-      ));
-    }
-    return posts;
+      return PostDto.fromJson(json);
+    }).toList();
+
+    // Fetch comments in parallel only for posts that don't have them
+    return await Future.wait(initialPosts.map((dto) async {
+      if (dto.comments.isEmpty) {
+        try {
+          final comments = await getPostComments(dto.id);
+          return dto.copyWith(comments: comments);
+        } catch (e) {
+          // If comment fetch fails, return post as is
+          return dto;
+        }
+      }
+      return dto;
+    }));
   }
 
   Future<PostDto?> getPostById(String postId) async {
@@ -54,11 +51,24 @@ class FeedApiDataSource {
     return PostDto.fromJson(json);
   }
 
+  Future<String> uploadMedia(Uint8List bytes, String filename) async {
+    final formData = FormData();
+    formData.fields.add(const MapEntry('type', 'post_media'));
+    formData.files.add(MapEntry(
+      'file',
+      MultipartFile.fromBytes(bytes, filename: filename),
+    ));
+
+    final response = await _client.dio.post('/api/upload', data: formData);
+    final data = response.data['data'];
+    return data['id'].toString();
+  }
+
   Future<void> createPost({
     required String content,
     required String type,
     required List<String> tags,
-    List<Uint8List> mediaBytes = const [],
+    List<String> mediaIds = const [],
   }) async {
     final formData = FormData();
     formData.fields.add(MapEntry('content', content));
@@ -66,11 +76,8 @@ class FeedApiDataSource {
     for (int i = 0; i < tags.length; i++) {
       formData.fields.add(MapEntry('tags[$i]', tags[i]));
     }
-    for (int i = 0; i < mediaBytes.length; i++) {
-      formData.files.add(MapEntry(
-        'media[]',
-        MultipartFile.fromBytes(mediaBytes[i], filename: 'img_$i.jpg'),
-      ));
+    for (int i = 0; i < mediaIds.length; i++) {
+      formData.fields.add(MapEntry('media_ids[$i]', mediaIds[i]));
     }
     await _client.dio.post('/api/posts', data: formData);
   }

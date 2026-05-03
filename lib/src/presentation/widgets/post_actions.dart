@@ -31,7 +31,7 @@ class PostActions extends ConsumerWidget {
                 "assets/icons/comment.svg",
                 package: 'feed_module',
               ),
-              count: post.comments.length,
+              count: post.commentsCount,
               color: const Color(0xFF1F1F1F),
               onTap: onCommentPressed,
             ),

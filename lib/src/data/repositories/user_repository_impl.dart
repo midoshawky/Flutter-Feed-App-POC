@@ -23,4 +23,20 @@ class UserRepositoryImpl implements UserRepository {
     final dtos = await _datasource.getUsers(ids);
     return dtos.map((d) => d.toEntity()).toList();
   }
+
+  @override
+  Future<void> followUser(String userId) async {
+    final user = await getUserById(userId);
+    if (user != null) {
+      await _datasource.toggleFollow(user.username);
+    }
+  }
+
+  @override
+  Future<void> unfollowUser(String userId) async {
+    final user = await getUserById(userId);
+    if (user != null) {
+      await _datasource.toggleFollow(user.username);
+    }
+  }
 }

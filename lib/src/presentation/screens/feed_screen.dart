@@ -129,7 +129,8 @@ class _FeedScreenBody extends ConsumerWidget {
           ? FloatingActionButton(
               onPressed: () => _showCreatePostSheet(context, ref),
               backgroundColor: const Color(0xFF4535C1),
-              child: const Icon(Icons.add),
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add, color: Colors.white),
             )
           : null,
       body: Center(

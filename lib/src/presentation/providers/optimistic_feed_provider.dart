@@ -209,4 +209,69 @@ class OptimisticFeedNotifier
       rethrow;
     }
   }
+
+  /// Optimistically update a post
+  Future<void> updatePost(String postId, String content) async {
+    final oldState = state;
+    final currentPosts = state.value;
+    if (currentPosts == null) return;
+
+    state = AsyncValue.data([
+      for (final post in currentPosts)
+        if (post.id == postId) post.copyWith(content: content) else post,
+    ]);
+
+    try {
+      await ref.read(updatePostUseCaseProvider).call(postId, content);
+    } catch (e) {
+      state = oldState;
+      rethrow;
+    }
+  }
+
+  /// Optimistically delete a post
+  Future<void> deletePost(String postId) async {
+    final oldState = state;
+    final currentPosts = state.value;
+    if (currentPosts == null) return;
+
+    state = AsyncValue.data(
+      currentPosts.where((post) => post.id != postId).toList(),
+    );
+
+    try {
+      await ref.read(deletePostUseCaseProvider).call(postId);
+    } catch (e) {
+      state = oldState;
+      rethrow;
+    }
+  }
+
+  /// Optimistically toggle follow
+  Future<void> toggleFollow(String userId, bool isFollowing) async {
+    final oldState = state;
+    final currentPosts = state.value;
+    if (currentPosts == null) return;
+
+    state = AsyncValue.data([
+      for (final post in currentPosts)
+        post.copyWith(
+          user: post.user?.id == userId 
+              ? post.user?.copyWith(isFollowing: !isFollowing) 
+              : post.user,
+          repostedFrom: post.repostedFrom?.user?.id == userId
+              ? post.repostedFrom?.copyWith(
+                  user: post.repostedFrom?.user?.copyWith(isFollowing: !isFollowing),
+                )
+              : post.repostedFrom,
+        ),
+    ]);
+
+    try {
+      await ref.read(followUserUseCaseProvider).call(userId, isFollowing);
+    } catch (e) {
+      state = oldState;
+      rethrow;
+    }
+  }
 }

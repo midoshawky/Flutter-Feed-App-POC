@@ -6,7 +6,11 @@ class ApiClient {
   final Dio _dio;
 
   ApiClient({required String? Function() tokenProvider})
-      : _dio = Dio(BaseOptions(baseUrl: _baseUrl)) {
+      : _dio = Dio(BaseOptions(
+          baseUrl: _baseUrl,
+          connectTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        )) {
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
         final token = tokenProvider();

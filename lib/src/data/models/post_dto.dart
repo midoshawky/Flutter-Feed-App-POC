@@ -15,6 +15,7 @@ class PostDto {
   final DateTime timestamp;
   final String? repostedFromId;
   final List<CommentDto> comments;
+  final int commentsCount;
   final bool isLiked;
   final UserDto? userDto;
   final PostDto? repostedFromDto;
@@ -32,15 +33,47 @@ class PostDto {
     required this.timestamp,
     this.repostedFromId,
     this.comments = const [],
+    this.commentsCount = 0,
     this.isLiked = false,
     this.userDto,
     this.repostedFromDto,
   });
 
-  factory PostDto.fromJson(Map<String, dynamic> json) {
+  PostDto copyWith({List<CommentDto>? comments, PostDto? repostedFromDto}) {
+    return PostDto(
+      id: id,
+      userId: userId,
+      content: content,
+      imageUrl: imageUrl,
+      mediaUrls: mediaUrls,
+      tags: tags,
+      type: type,
+      likesCount: likesCount,
+      repostsCount: repostsCount,
+      timestamp: timestamp,
+      repostedFromId: repostedFromId,
+      comments: comments ?? this.comments,
+      commentsCount: commentsCount,
+      isLiked: isLiked,
+      userDto: userDto,
+      repostedFromDto: repostedFromDto ?? this.repostedFromDto,
+    );
+  }
+
+  factory PostDto.fromJson(Map<String, dynamic> json, {int depth = 0}) {
+    if (depth > 5) {
+      // Prevent infinite recursion from circular reposts
+      return PostDto(
+        id: json['id'].toString(),
+        userId: json['user_id'].toString(),
+        content: json['content'] as String? ?? '',
+        type: 'text',
+        timestamp: DateTime.now(),
+      );
+    }
     final mediaList = (json['media'] as List? ?? []);
     final mediaUrls = mediaList
-        .map((m) => (m as Map<String, dynamic>)['url'] as String? ?? '')
+        .map((m) => (m as Map<String, dynamic>)['file_url'] as String? ?? '')
         .where((url) => url.isNotEmpty)
         .toList();
 
@@ -60,6 +93,7 @@ class PostDto {
       type: json['type'] as String? ?? 'text',
       likesCount: (json['likes_count'] as num?)?.toInt() ?? 0,
       repostsCount: (json['reposts_count'] as num?)?.toInt() ?? 0,
+      commentsCount: (json['comments_count'] as num?)?.toInt() ?? 0,
       isLiked: json['is_liked'] as bool? ?? false,
       timestamp: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
@@ -70,7 +104,7 @@ class PostDto {
           .toList(),
       userDto: userJson != null ? UserDto.fromJson(userJson) : null,
       repostedFromDto: repostedFromJson != null
-          ? PostDto.fromJson(repostedFromJson)
+          ? PostDto.fromJson(repostedFromJson, depth: depth + 1)
           : null,
     );
   }
@@ -91,11 +125,10 @@ class PostDto {
   static String typeToString(PostTypeEntity t) {
     switch (t) {
       case PostTypeEntity.image:
+      case PostTypeEntity.multiImage:
         return 'image';
       case PostTypeEntity.video:
         return 'video';
-      case PostTypeEntity.multiImage:
-        return 'multiImage';
       default:
         return 'text';
     }
@@ -113,6 +146,7 @@ class PostDto {
       likesCount: likesCount,
       repostsCount: repostsCount,
       comments: comments.map((c) => c.toEntity()).toList(),
+      commentsCount: commentsCount,
       timestamp: timestamp,
       isLiked: isLiked ?? this.isLiked,
       repostedFrom: repostedFrom,

@@ -19,7 +19,17 @@ class CommentDto {
     this.replies = const [],
   });
 
-  factory CommentDto.fromJson(Map<String, dynamic> json) {
+  factory CommentDto.fromJson(Map<String, dynamic> json, {int depth = 0}) {
+    if (depth > 10) {
+      // Prevent infinite recursion from circular replies
+      return CommentDto(
+        id: json['id'].toString(),
+        userId: json['user_id'].toString(),
+        userName: '',
+        text: '...',
+        timestamp: DateTime.now(),
+      );
+    }
     final user = json['user'] as Map<String, dynamic>?;
     return CommentDto(
       id: json['id'].toString(),
@@ -31,7 +41,7 @@ class CommentDto {
           ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
           : DateTime.now(),
       replies: (json['replies'] as List? ?? [])
-          .map((r) => CommentDto.fromJson(r as Map<String, dynamic>))
+          .map((r) => CommentDto.fromJson(r as Map<String, dynamic>, depth: depth + 1))
           .toList(),
     );
   }

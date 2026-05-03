@@ -13,17 +13,23 @@ class PostRepositoryImpl implements PostRepository {
   @override
   Stream<List<PostEntity>> getFeed({int limit = 20}) async* {
     final dtos = await _datasource.getFeedPosts(limit: limit);
-    final List<PostEntity> posts = [];
-    for (final dto in dtos) {
+    
+    // Fetch original posts for reposts in parallel
+    final posts = await Future.wait(dtos.map((dto) async {
       PostEntity? repostedFrom;
       if (dto.repostedFromDto != null) {
         repostedFrom = dto.repostedFromDto!.toEntity();
       } else if (dto.repostedFromId != null) {
-        final origDto = await _datasource.getPostById(dto.repostedFromId!);
-        if (origDto != null) repostedFrom = origDto.toEntity();
+        try {
+          final origDto = await _datasource.getPostById(dto.repostedFromId!);
+          if (origDto != null) repostedFrom = origDto.toEntity();
+        } catch (_) {
+          // If fetch fails, we just don't show the repost preview
+        }
       }
-      posts.add(dto.toEntity(repostedFrom: repostedFrom));
-    }
+      return dto.toEntity(repostedFrom: repostedFrom);
+    }));
+    
     yield posts;
   }
 
@@ -35,17 +41,26 @@ class PostRepositoryImpl implements PostRepository {
     required List<String> tags,
     List<Uint8List> mediaBytes = const [],
   }) async {
-    final resolvedType = mediaBytes.length == 1
-        ? PostTypeEntity.image
-        : mediaBytes.length > 1
-            ? PostTypeEntity.multiImage
-            : type;
+    // 1. Upload all media files in parallel to get their IDs
+    final List<String> mediaIds = await Future.wait(
+      mediaBytes.asMap().entries.map((entry) => 
+        _datasource.uploadMedia(entry.value, 'media_${entry.key}.jpg')
+      ),
+    );
 
+    // 2. Resolve post type based on media presence if it was not explicitly set correctly
+    final resolvedType = mediaIds.isEmpty
+        ? PostTypeEntity.text
+        : mediaIds.length == 1
+            ? PostTypeEntity.image
+            : PostTypeEntity.multiImage;
+
+    // 3. Create the post using the collected media IDs
     await _datasource.createPost(
       content: content,
       type: PostDto.typeToString(resolvedType),
       tags: tags,
-      mediaBytes: mediaBytes,
+      mediaIds: mediaIds,
     );
   }
 
@@ -77,5 +92,15 @@ class PostRepositoryImpl implements PostRepository {
   }) async {
     await _datasource.addComment(postId,
         text: reply.text, parentId: parentCommentId);
+  }
+
+  @override
+  Future<void> updatePost(String postId, String content) async {
+    await _datasource.updatePost(postId, content: content);
+  }
+
+  @override
+  Future<void> deletePost(String postId) async {
+    await _datasource.deletePost(postId);
   }
 }

@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:feed_module/feed_module.dart';
 import 'package:feed_module/src/utils/responsive_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,7 +13,8 @@ import '../../services/mock_data_service.dart';
 import 'user_avatar.dart';
 
 class CreatePostCard extends ConsumerStatefulWidget {
-  const CreatePostCard({super.key});
+  final Post? postToEdit;
+  const CreatePostCard({super.key, this.postToEdit});
 
   @override
   ConsumerState<CreatePostCard> createState() => _CreatePostCardState();
@@ -44,6 +46,10 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
   void initState() {
     super.initState();
     _controller = FlutterTaggerController();
+    if (widget.postToEdit != null) {
+      _controller.text = widget.postToEdit!.content;
+      _isHasInput = widget.postToEdit!.content.isNotEmpty;
+    }
     _controller.addListener(() {
       setState(() {
         _isHasInput = _controller.text.isNotEmpty;
@@ -101,25 +107,40 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
       final tags = _controller.tags.map((t) => '#${t.text}').toList();
       final userId = ref.read(currentUserIdProvider);
 
-      await ref.read(optimisticFeedProvider.notifier).createPost(
-            userId: userId.isNotEmpty ? userId : '2',
-            content: text,
-            type: _attachedMedia.isEmpty
-                ? PostTypeEntity.text
-                : _attachedMedia.length == 1
-                    ? PostTypeEntity.image
-                    : PostTypeEntity.multiImage,
-            tags: tags,
-            mediaBytes: List.from(_attachedMedia),
-          );
+      if (widget.postToEdit != null) {
+        await ref
+            .read(optimisticFeedProvider.notifier)
+            .updatePost(widget.postToEdit!.id, text);
+      } else {
+        await ref
+            .read(optimisticFeedProvider.notifier)
+            .createPost(
+              userId: userId.isNotEmpty ? userId : '2',
+              content: text,
+              type: _attachedMedia.isEmpty
+                  ? PostTypeEntity.text
+                  : _attachedMedia.length == 1
+                  ? PostTypeEntity.image
+                  : PostTypeEntity.multiImage,
+              tags: tags,
+              mediaBytes: List.from(_attachedMedia),
+            );
+      }
 
       // Success: Reset state
       _controller.clear();
       _attachedMedia.clear();
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Post shared!')));
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              widget.postToEdit != null ? 'Post updated!' : 'Post shared!',
+            ),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -137,7 +158,6 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
     final currentUser = ref.watch(currentUserNameProvider);
     final currentUserAvatar = ref.watch(currentUserAvatarUrlProvider);
     final currentUserId = ref.watch(currentUserIdProvider);
-
 
     final isMobile = ResponsiveLayout.isMobile(context);
 
@@ -432,7 +452,7 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
                         ),
                       )
                     : Text(
-                        'Post',
+                        widget.postToEdit != null ? 'Save' : 'Post',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,

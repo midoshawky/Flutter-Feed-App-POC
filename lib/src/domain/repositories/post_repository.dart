@@ -30,4 +30,8 @@ abstract class PostRepository {
     required String parentCommentId,
     required CommentEntity reply,
   });
+
+  Future<void> updatePost(String postId, String content);
+
+  Future<void> deletePost(String postId);
 }
