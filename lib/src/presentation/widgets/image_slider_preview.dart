@@ -1,6 +1,5 @@
 import 'package:feed_module/src/utils/responsive_layout.dart';
 import 'package:flutter/material.dart';
-import 'web_safe_image.dart';
 
 class ImageSliderPreview extends StatefulWidget {
   final List<String> imageUrls;
@@ -93,10 +92,12 @@ class _ImageSliderPreviewState extends State<ImageSliderPreview> {
                     child: Center(
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: WebSafeImage(
-                          url: widget.imageUrls[index],
+                        child: Image.network(
+                          widget.imageUrls[index],
                           fit: BoxFit.contain,
-                          errorWidget: const Center(
+                          webHtmlElementStrategy:
+                              WebHtmlElementStrategy.prefer,
+                          errorBuilder: (_, __, ___) => const Center(
                             child: Icon(
                               Icons.error,
                               color: Colors.white,

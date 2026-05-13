@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'web_safe_image.dart';
 
 class UserAvatar extends StatelessWidget {
   final String url;
@@ -19,12 +18,14 @@ class UserAvatar extends StatelessWidget {
       child: ClipOval(
         child: url.isEmpty
             ? const Icon(Icons.person, color: Colors.grey)
-            : WebSafeImage(
-                url: url,
+            : Image.network(
+                url,
                 width: radius * 2,
                 height: radius * 2,
                 fit: BoxFit.cover,
-                errorWidget: const Icon(Icons.person, color: Colors.grey),
+                webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
+                errorBuilder: (_, __, ___) =>
+                    const Icon(Icons.person, color: Colors.grey),
               ),
       ),
     );
