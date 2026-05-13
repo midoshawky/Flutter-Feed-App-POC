@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:ui_web' as ui_web;
 // ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+import 'dart:js_interop';
+// ignore: avoid_web_libraries_in_flutter
+import 'package:web/web.dart' as web;
 
 class WebSafeImage extends StatelessWidget {
   final String url;
@@ -21,21 +23,22 @@ class WebSafeImage extends StatelessWidget {
     this.errorWidget,
   }) {
     if (kIsWeb && url.isNotEmpty) {
-      // Register the view factory for this specific URL
-      // We use the hash to avoid re-registering the same factory multiple times
       final String viewId = 'img-${url.hashCode}';
       ui_web.platformViewRegistry.registerViewFactory(viewId, (int viewId) {
-        final element = html.ImageElement()
+        final element = web.HTMLImageElement()
           ..src = url
           ..style.width = '100%'
           ..style.height = '100%'
           ..style.objectFit = _boxFitToHtml(fit);
-        
-        // Add error handling to the HTML element
-        element.onError.listen((_) {
-          element.src = 'https://via.placeholder.com/400x300?text=Error+Loading+Image';
-        });
-        
+
+        element.addEventListener(
+          'error',
+          ((web.Event e) {
+            element.src =
+                'https://via.placeholder.com/400x300?text=Error+Loading+Image';
+          }).toJS,
+        );
+
         return element;
       });
     }
