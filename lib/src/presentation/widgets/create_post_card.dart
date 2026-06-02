@@ -432,13 +432,13 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4535C1),
                   foregroundColor: const Color(0xFFF5F5F5),
-                  fixedSize: Size.fromHeight(40),
+                  minimumSize: const Size(80, 48),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 32,
-                    vertical: 12,
+                    vertical: 8,
                   ),
                   elevation: 0,
                 ),

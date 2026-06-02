@@ -24,3 +24,10 @@ class AddReplyUseCase {
         reply: reply,
       );
 }
+
+class DeleteCommentUseCase {
+  final PostRepository repository;
+  DeleteCommentUseCase(this.repository);
+
+  Future<void> call(String commentId) => repository.deleteComment(commentId);
+}

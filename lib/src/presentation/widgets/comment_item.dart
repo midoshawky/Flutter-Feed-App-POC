@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../models/comment.dart';
 import '../../domain/entities/comment_entity.dart';
+import '../providers/di_providers.dart';
 import '../providers/optimistic_feed_provider.dart';
 import '../../services/mock_data_service.dart';
 import '../../utils/responsive_layout.dart';
@@ -60,11 +61,10 @@ class _CommentItemState extends ConsumerState<CommentItem> {
     final text = _replyController.text.trim();
     if (text.isEmpty) return;
 
-    final currentUser = MockDataService.users[1]; // Sara Hany
     final reply = CommentEntity(
-      id: '', // Firestore will generate
-      userId: currentUser.id,
-      userName: currentUser.name,
+      id: '',
+      userId: ref.read(currentUserIdProvider),
+      userName: ref.read(currentUserNameProvider),
       text: text,
       timestamp: DateTime.now(),
     );
@@ -95,8 +95,8 @@ class _CommentItemState extends ConsumerState<CommentItem> {
     final user = MockDataService.getUserById(widget.comment.userId);
     final avatarUrl = user?.avatarUrl ?? 'https://i.pravatar.cc/150';
     final handle = user?.username ?? '@user';
-    final currentUser = MockDataService.users[1]; // Sara Hany
-    final isCurrentUser = currentUser.id == '2';
+    final currentUserId = ref.read(currentUserIdProvider);
+    final isCurrentUser = widget.comment.userId == currentUserId;
 
     final isHighlighted = widget.replyingToId == widget.comment.id;
 
@@ -123,6 +123,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                   children: [
                     // Author row
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       spacing: 4,
                       children: [
                         Text(
@@ -137,14 +138,14 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                           handle,
                           style: TextStyle(
                             color: const Color(0xFF787878),
-                            fontSize: widget.isReply ? 12 : 12,
+                            fontSize: 12,
                           ),
                         ),
                         Text(
                           '• ${_getTimeAgo(widget.comment.timestamp)}',
                           style: TextStyle(
                             color: const Color(0xFF787878),
-                            fontSize: 14,
+                            fontSize: 12,
                           ),
                         ),
                         if (isCurrentUser)
@@ -153,12 +154,22 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                               Icons.more_horiz,
                               color: Color(0xFF787878),
                             ),
+                            iconSize: 18,
                             padding: EdgeInsets.zero,
                             position: PopupMenuPosition.under,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            onSelected: (value) {},
+                            onSelected: (value) {
+                              if (value == 'delete') {
+                                ref
+                                    .read(optimisticFeedProvider.notifier)
+                                    .deleteComment(
+                                      widget.postId,
+                                      widget.comment.id,
+                                    );
+                              }
+                            },
                             itemBuilder: (context) => [
                               PopupMenuItem(
                                 value: 'edit',
@@ -207,7 +218,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     // Comment text
                     Text(
                       widget.comment.text,
@@ -298,7 +309,10 @@ class _CommentItemState extends ConsumerState<CommentItem> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  UserAvatar(url: currentUser.avatarUrl, radius: 16),
+                  UserAvatar(
+                    url: ref.read(currentUserAvatarUrlProvider) ?? '',
+                    radius: 16,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Container(

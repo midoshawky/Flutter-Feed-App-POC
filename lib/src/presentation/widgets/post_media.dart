@@ -125,12 +125,43 @@ class PostMedia extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Expanded(
-                  child: _buildCroppedImage(
-                    context,
-                    urls,
-                    2,
-                    BorderRadius.only(bottomRight: Radius.circular(16)),
-                  ),
+                  child: urls.length > 3
+                      ? Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            _buildCroppedImage(
+                              context,
+                              urls,
+                              2,
+                              BorderRadius.only(
+                                bottomRight: Radius.circular(16),
+                              ),
+                            ),
+                            ClipRRect(
+                              borderRadius: const BorderRadius.only(
+                                bottomRight: Radius.circular(16),
+                              ),
+                              child: Container(
+                                color: Colors.black.withValues(alpha: 0.5),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  '+${urls.length - 3}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : _buildCroppedImage(
+                          context,
+                          urls,
+                          2,
+                          BorderRadius.only(bottomRight: Radius.circular(16)),
+                        ),
                 ),
               ],
             ),

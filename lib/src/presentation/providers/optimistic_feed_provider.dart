@@ -247,6 +247,46 @@ class OptimisticFeedNotifier
     }
   }
 
+  /// Optimistically delete a comment (or reply) from a post
+  Future<void> deleteComment(String postId, String commentId) async {
+    final oldState = state;
+    final currentPosts = state.value;
+    if (currentPosts == null) return;
+
+    state = AsyncValue.data([
+      for (final post in currentPosts)
+        if (post.id == postId)
+          post.copyWith(
+            comments: _removeComment(post.comments, commentId),
+          )
+        else
+          post,
+    ]);
+
+    try {
+      await ref.read(deleteCommentUseCaseProvider).call(commentId);
+    } catch (e) {
+      state = oldState;
+      rethrow;
+    }
+  }
+
+  List<CommentEntity> _removeComment(
+    List<CommentEntity> comments,
+    String commentId,
+  ) {
+    return [
+      for (final c in comments)
+        if (c.id != commentId)
+          c.copyWith(replies: _removeComment(c.replies, commentId)),
+    ];
+  }
+
+  /// Re-fetch the feed from the server
+  Future<void> refresh() async {
+    ref.invalidate(feedStreamProvider);
+  }
+
   /// Optimistically toggle follow
   Future<void> toggleFollow(String userId, bool isFollowing) async {
     final oldState = state;

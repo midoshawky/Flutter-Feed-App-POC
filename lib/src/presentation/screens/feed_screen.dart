@@ -99,10 +99,14 @@ class _FeedScreenBody extends ConsumerWidget {
       builder: (sheetContext) => UncontrolledProviderScope(
         container: container,
         child: DraggableScrollableSheet(
-          initialChildSize: 0.95,
+          initialChildSize: 0.5,
           minChildSize: 0.5,
           maxChildSize: 0.95,
-          builder: (sheetContext, scrollController) => Container(
+          builder: (sheetContext, scrollController) => Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+            ),
+            child: Container(
             decoration: const BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -131,6 +135,7 @@ class _FeedScreenBody extends ConsumerWidget {
                 ),
               ],
             ),
+          ),
           ),
         ),
       ),
@@ -200,21 +205,26 @@ class _FeedScreenBody extends ConsumerWidget {
                 ],
               ),
             ),
-            data: (posts) => ListView.builder(
-              itemCount: posts.length + 1,
-              padding: const EdgeInsets.only(bottom: 24),
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  return isMobile
-                      ? GestureDetector(
-                          onTap: () => _showCreatePostSheet(context, ref),
-                          child: const MobileCreatePostTrigger(),
-                        )
-                      : const CreatePostCard();
-                }
-                final entity = posts[index - 1];
-                return PostCard(post: entity.toLegacy());
-              },
+            data: (posts) => RefreshIndicator(
+              color: const Color(0xFF4535C1),
+              onRefresh: () =>
+                  ref.read(optimisticFeedProvider.notifier).refresh(),
+              child: ListView.builder(
+                itemCount: posts.length + 1,
+                padding: const EdgeInsets.only(bottom: 24),
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return isMobile
+                        ? GestureDetector(
+                            onTap: () => _showCreatePostSheet(context, ref),
+                            child: const MobileCreatePostTrigger(),
+                          )
+                        : const CreatePostCard();
+                  }
+                  final entity = posts[index - 1];
+                  return PostCard(post: entity.toLegacy());
+                },
+              ),
             ),
           ),
         ),

@@ -93,9 +93,10 @@ class PostHeader extends ConsumerWidget {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
+                        final messenger = ScaffoldMessenger.of(context);
                         ref.read(optimisticFeedProvider.notifier).deletePost(post.id);
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        messenger.showSnackBar(
                           const SnackBar(content: Text('Post deleted')),
                         );
                       },
@@ -136,10 +137,14 @@ class PostHeader extends ConsumerWidget {
         builder: (context) => UncontrolledProviderScope(
           container: container,
           child: DraggableScrollableSheet(
-            initialChildSize: 0.95,
+            initialChildSize: 0.5,
             minChildSize: 0.5,
             maxChildSize: 0.95,
-            builder: (context, scrollController) => Container(
+            builder: (context, scrollController) => Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
               decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -168,6 +173,7 @@ class PostHeader extends ConsumerWidget {
                   ),
                 ],
               ),
+            ),
             ),
           ),
         ),

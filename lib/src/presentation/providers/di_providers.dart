@@ -68,6 +68,10 @@ final addReplyUseCaseProvider = Provider<AddReplyUseCase>((ref) {
   return AddReplyUseCase(ref.watch(postRepositoryProvider));
 });
 
+final deleteCommentUseCaseProvider = Provider<DeleteCommentUseCase>((ref) {
+  return DeleteCommentUseCase(ref.watch(postRepositoryProvider));
+});
+
 final updatePostUseCaseProvider = Provider<UpdatePostUseCase>((ref) {
   return UpdatePostUseCase(ref.watch(postRepositoryProvider));
 });
