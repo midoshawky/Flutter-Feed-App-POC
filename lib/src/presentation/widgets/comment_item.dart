@@ -139,7 +139,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              UserAvatar(url: avatarUrl, radius: 20),
+              Padding(padding: EdgeInsets.only(top: 8),child:UserAvatar(url: avatarUrl, radius: 20),),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
@@ -172,6 +172,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                             fontSize: 12,
                           ),
                         ),
+                        if (isCurrentUser) Spacer(),
                         if (isCurrentUser)
                           PopupMenuButton<String>(
                             icon: const Icon(
@@ -248,7 +249,6 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 6),
                     // Comment text / inline edit field
                     if (_isEditing)
                       Container(
