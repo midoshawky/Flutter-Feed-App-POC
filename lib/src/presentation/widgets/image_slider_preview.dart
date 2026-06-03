@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:feed_module/src/utils/responsive_layout.dart';
 import 'package:flutter/material.dart';
 
@@ -92,12 +93,15 @@ class _ImageSliderPreviewState extends State<ImageSliderPreview> {
                     child: Center(
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          widget.imageUrls[index],
+                        child: CachedNetworkImage(
+                          imageUrl: widget.imageUrls[index],
                           fit: BoxFit.contain,
-                          webHtmlElementStrategy:
-                              WebHtmlElementStrategy.prefer,
-                          errorBuilder: (_, __, ___) => const Center(
+                          placeholder: (_, __) => const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white54,
+                            ),
+                          ),
+                          errorWidget: (_, __, ___) => const Center(
                             child: Icon(
                               Icons.error,
                               color: Colors.white,

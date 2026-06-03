@@ -9,10 +9,22 @@ import '../providers/di_providers.dart';
 import '../providers/optimistic_feed_provider.dart';
 
 /// A compact read-only card that embeds the original post inside a repost.
-class RepostPreviewCard extends ConsumerWidget {
+class RepostPreviewCard extends ConsumerStatefulWidget {
   final Post post;
 
   const RepostPreviewCard({super.key, required this.post});
+
+  @override
+  ConsumerState<RepostPreviewCard> createState() => _RepostPreviewCardState();
+}
+
+class _RepostPreviewCardState extends ConsumerState<RepostPreviewCard> {
+  bool _expanded = false;
+
+  static const int _charThreshold = 300;
+  static const int _maxLines = 4;
+
+  bool get _needsExpansion => widget.post.content.length > _charThreshold;
 
   String _getTimeAgo(DateTime time) {
     final diff = DateTime.now().difference(time);
@@ -23,7 +35,8 @@ class RepostPreviewCard extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final post = widget.post;
     final user = post.user ?? MockDataService.getUserById(post.userId);
     final currentUserId = ref.watch(currentUserIdProvider);
     final isCurrentUser = user?.id == currentUserId;
@@ -154,12 +167,31 @@ class RepostPreviewCard extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               post.content,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
-                color: const Color(0xFF1F1F1F),
+                color: Color(0xFF1F1F1F),
                 height: 1.5,
               ),
+              maxLines: _needsExpansion && !_expanded ? _maxLines : null,
+              overflow: _needsExpansion && !_expanded
+                  ? TextOverflow.ellipsis
+                  : TextOverflow.clip,
             ),
+            if (_needsExpansion)
+              GestureDetector(
+                onTap: () => setState(() => _expanded = !_expanded),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    _expanded ? 'See less' : 'See more',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF4535C1),
+                    ),
+                  ),
+                ),
+              ),
           ],
 
           // Media

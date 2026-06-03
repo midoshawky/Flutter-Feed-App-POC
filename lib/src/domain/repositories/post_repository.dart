@@ -36,4 +36,6 @@ abstract class PostRepository {
   Future<void> deletePost(String postId);
 
   Future<void> deleteComment(String commentId);
+
+  Future<void> updateComment(String commentId, String text);
 }

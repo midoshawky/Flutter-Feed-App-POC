@@ -19,12 +19,16 @@ class CommentEntity {
     this.likesCount = 0,
   });
 
-  CommentEntity copyWith({List<CommentEntity>? replies, int? likesCount}) {
+  CommentEntity copyWith({
+    String? text,
+    List<CommentEntity>? replies,
+    int? likesCount,
+  }) {
     return CommentEntity(
       id: id,
       userId: userId,
       userName: userName,
-      text: text,
+      text: text ?? this.text,
       timestamp: timestamp,
       replies: replies ?? this.replies,
       likesCount: likesCount ?? this.likesCount,

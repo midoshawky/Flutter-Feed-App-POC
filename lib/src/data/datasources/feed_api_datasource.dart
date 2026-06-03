@@ -145,6 +145,10 @@ class FeedApiDataSource {
     await _client.dio.delete('/api/comments/$commentId');
   }
 
+  Future<void> updateComment(String commentId, String text) async {
+    await _client.dio.put('/api/comments/$commentId', data: {'text': text});
+  }
+
   // ── Follows ──────────────────────────────────────────────────────────────────
 
   Future<void> toggleFollow(String username) async {

@@ -39,14 +39,38 @@ class CommentItem extends ConsumerStatefulWidget {
 class _CommentItemState extends ConsumerState<CommentItem> {
   bool _showReplies = false;
   bool _showReplyInput = false;
+  bool _isEditing = false;
   final TextEditingController _replyController = TextEditingController();
+  final TextEditingController _editController = TextEditingController();
   final FocusNode _replyFocus = FocusNode();
+  final FocusNode _editFocus = FocusNode();
 
   @override
   void dispose() {
     _replyController.dispose();
+    _editController.dispose();
     _replyFocus.dispose();
+    _editFocus.dispose();
     super.dispose();
+  }
+
+  Future<void> _submitEdit() async {
+    final text = _editController.text.trim();
+    if (text.isEmpty || text == widget.comment.text) {
+      setState(() => _isEditing = false);
+      return;
+    }
+    try {
+      await ref
+          .read(optimisticFeedProvider.notifier)
+          .updateComment(widget.postId, widget.comment.id, text);
+      if (mounted) setState(() => _isEditing = false);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error updating: $e')));
+      }
+    }
   }
 
   String _getTimeAgo(DateTime time) {
@@ -168,6 +192,12 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                                       widget.postId,
                                       widget.comment.id,
                                     );
+                              } else if (value == 'edit') {
+                                setState(() {
+                                  _isEditing = true;
+                                  _editController.text = widget.comment.text;
+                                });
+                                Future.microtask(() => _editFocus.requestFocus());
                               }
                             },
                             itemBuilder: (context) => [
@@ -219,15 +249,56 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    // Comment text
-                    Text(
-                      widget.comment.text,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: const Color(0xFF1F1F1F),
-                        height: 1.4,
+                    // Comment text / inline edit field
+                    if (_isEditing)
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFFDEDEDE)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 4),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _editController,
+                                focusNode: _editFocus,
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                ),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF1F1F1F),
+                                ),
+                                maxLines: null,
+                                onSubmitted: (_) => _submitEdit(),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: _submitEdit,
+                              child: const Icon(Icons.send,
+                                  size: 18, color: Color(0xFF4535C1)),
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () => setState(() => _isEditing = false),
+                              child: const Icon(Icons.close,
+                                  size: 18, color: Color(0xFF787878)),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      Text(
+                        widget.comment.text,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF1F1F1F),
+                          height: 1.4,
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 6),
                     // Reply tap
                     Row(

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../models/post.dart';
 import 'image_slider_preview.dart';
@@ -28,14 +29,17 @@ class PostMedia extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: Image.network(
-              url,
+            child: CachedNetworkImage(
+              imageUrl: url,
               fit: BoxFit.cover,
-              webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
               height: 320,
               width: double.infinity,
-              headers: {'Access-Control-Allow-Origin': '*'},
-              errorBuilder: (_, __, ___) => Container(
+              placeholder: (_, __) => Container(
+                height: 320,
+                width: double.infinity,
+                color: Colors.grey[200],
+              ),
+              errorWidget: (_, __, ___) => Container(
                 height: 320,
                 width: double.infinity,
                 color: Colors.grey[300],
@@ -181,14 +185,13 @@ class PostMedia extends StatelessWidget {
       onTap: () => _openSlider(context, urls, index),
       child: ClipRRect(
         borderRadius: borderRadius,
-        child: Image.network(
-          urls[index],
+        child: CachedNetworkImage(
+          imageUrl: urls[index],
           fit: BoxFit.cover,
-          webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
-          headers: {'Access-Control-Allow-Origin': '*'},
           width: double.infinity,
           height: double.infinity,
-          errorBuilder: (_, __, ___) => Container(color: Colors.grey[300]),
+          placeholder: (_, __) => Container(color: Colors.grey[200]),
+          errorWidget: (_, __, ___) => Container(color: Colors.grey[300]),
         ),
       ),
     );

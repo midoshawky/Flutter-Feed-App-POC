@@ -108,4 +108,9 @@ class PostRepositoryImpl implements PostRepository {
   Future<void> deleteComment(String commentId) async {
     await _datasource.deleteComment(commentId);
   }
+
+  @override
+  Future<void> updateComment(String commentId, String text) async {
+    await _datasource.updateComment(commentId, text);
+  }
 }

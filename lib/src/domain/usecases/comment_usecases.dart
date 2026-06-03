@@ -31,3 +31,11 @@ class DeleteCommentUseCase {
 
   Future<void> call(String commentId) => repository.deleteComment(commentId);
 }
+
+class UpdateCommentUseCase {
+  final PostRepository repository;
+  UpdateCommentUseCase(this.repository);
+
+  Future<void> call(String commentId, String text) =>
+      repository.updateComment(commentId, text);
+}

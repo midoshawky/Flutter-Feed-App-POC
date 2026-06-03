@@ -282,6 +282,46 @@ class OptimisticFeedNotifier
     ];
   }
 
+  /// Optimistically update a comment's text (works for replies too)
+  Future<void> updateComment(
+      String postId, String commentId, String newText) async {
+    final oldState = state;
+    final currentPosts = state.value;
+    if (currentPosts == null) return;
+
+    state = AsyncValue.data([
+      for (final post in currentPosts)
+        if (post.id == postId)
+          post.copyWith(
+            comments: _updateCommentText(post.comments, commentId, newText),
+          )
+        else
+          post,
+    ]);
+
+    try {
+      await ref.read(updateCommentUseCaseProvider).call(commentId, newText);
+    } catch (e) {
+      state = oldState;
+      rethrow;
+    }
+  }
+
+  List<CommentEntity> _updateCommentText(
+    List<CommentEntity> comments,
+    String commentId,
+    String newText,
+  ) {
+    return [
+      for (final c in comments)
+        if (c.id == commentId)
+          c.copyWith(text: newText)
+        else
+          c.copyWith(
+              replies: _updateCommentText(c.replies, commentId, newText)),
+    ];
+  }
+
   /// Re-fetch the feed from the server
   Future<void> refresh() async {
     ref.invalidate(feedStreamProvider);
