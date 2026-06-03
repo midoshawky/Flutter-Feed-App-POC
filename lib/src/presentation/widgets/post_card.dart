@@ -5,6 +5,7 @@ import '../../models/comment.dart';
 import '../../models/post.dart';
 import '../../services/mock_data_service.dart';
 import '../../utils/responsive_layout.dart';
+import '../providers/optimistic_feed_provider.dart';
 import 'post_header.dart';
 import 'post_content.dart';
 import 'post_actions.dart';
@@ -12,16 +13,16 @@ import 'comment_section.dart';
 import 'comment_input.dart';
 import 'repost_preview_card.dart';
 
-class PostCard extends StatefulWidget {
+class PostCard extends ConsumerStatefulWidget {
   final Post post;
 
   const PostCard({super.key, required this.post});
 
   @override
-  State<PostCard> createState() => _PostCardState();
+  ConsumerState<PostCard> createState() => _PostCardState();
 }
 
-class _PostCardState extends State<PostCard> {
+class _PostCardState extends ConsumerState<PostCard> {
   bool _showComments = false;
 
   void _showCommentSheet(BuildContext context) {
@@ -45,96 +46,107 @@ class _PostCardState extends State<PostCard> {
                 color: Colors.white,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 12),
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFDEDEDE),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Comments',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F1F1F),
-                          ),
+              child: Consumer(
+                builder: (ctx, ref, _) {
+                  final feedAsync = ref.watch(optimisticFeedProvider);
+                  final matched = feedAsync.value?.where((p) => p.id == widget.post.id);
+                  final currentPost = (matched != null && matched.isNotEmpty)
+                      ? matched.first.toLegacy()
+                      : widget.post;
+
+                  return Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDEDEDE),
+                          borderRadius: BorderRadius.circular(2),
                         ),
-                        if (widget.post.comments.isNotEmpty)
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => Navigator.pop(context),
-                          ),
-                      ],
-                    ),
-                  ),
-                  if (widget.post.comments.isEmpty)
-                    Expanded(
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            SvgPicture.asset(
-                              'assets/icons/no-comments.svg',
-                              package: 'feed_module',
-                            ),
-                            const SizedBox(height: 26),
-                            Text(
-                              'No comments',
+                            const Text(
+                              'Comments',
                               style: TextStyle(
-                                fontSize: 16,
-                                color: Color(0xFF787878),
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1F1F1F),
                               ),
                             ),
+                            if (currentPost.comments.isNotEmpty)
+                              IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: () => Navigator.pop(ctx),
+                              ),
                           ],
                         ),
                       ),
-                    ),
-                  if (widget.post.comments.isNotEmpty)
-                    Expanded(
-                      child: SingleChildScrollView(
-                        controller: scrollController,
-                        padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
-                        child: CommentSection(
-                          post: widget.post,
-                          replyingToId: replyingTo?.id,
-                          onReplyTap: (replyTarget, topLevelId) {
+                      if (currentPost.comments.isEmpty)
+                        Expanded(
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/icons/no-comments.svg',
+                                  package: 'feed_module',
+                                ),
+                                const SizedBox(height: 26),
+                                Text(
+                                  'No comments',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Color(0xFF787878),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      if (currentPost.comments.isNotEmpty)
+                        Expanded(
+                          child: SingleChildScrollView(
+                            controller: scrollController,
+                            padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
+                            child: CommentSection(
+                              post: currentPost,
+                              replyingToId: replyingTo?.id,
+                              onReplyTap: (replyTarget, topLevelId) {
+                                setSheetState(() {
+                                  replyingTo = replyTarget;
+                                  topLevelCommentId = topLevelId;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                      Padding(
+                        padding: EdgeInsets.only(
+                          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+                        ),
+                        child: CommentInput(
+                          post: currentPost,
+                          isReply: replyingTo != null,
+                          replyToUsername:
+                              replyingTo?.userName.replaceAll(' ', ''),
+                          parentCommentId: topLevelCommentId,
+                          onCancelReply: () {
                             setSheetState(() {
-                              replyingTo = replyTarget;
-                              topLevelCommentId = topLevelId;
+                              replyingTo = null;
+                              topLevelCommentId = null;
                             });
                           },
                         ),
                       ),
-                    ),
-                  Padding(
-                    padding: EdgeInsets.only(
-                      bottom: MediaQuery.of(context).viewInsets.bottom,
-                    ),
-                    child: CommentInput(
-                      post: widget.post,
-                      isReply: replyingTo != null,
-                      replyToUsername: replyingTo?.userName.replaceAll(' ', ''),
-                      parentCommentId: topLevelCommentId,
-                      onCancelReply: () {
-                        setSheetState(() {
-                          replyingTo = null;
-                          topLevelCommentId = null;
-                        });
-                      },
-                    ),
-                  ),
-                ],
+                    ],
+                  );
+                },
               ),
             ),
           ),
