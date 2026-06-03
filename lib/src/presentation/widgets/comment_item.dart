@@ -139,7 +139,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(padding: EdgeInsets.only(top: 8),child:UserAvatar(url: avatarUrl, radius: 20),),
+              Padding(padding: EdgeInsets.only(top: 8),child:UserAvatar(url: avatarUrl, radius: 20, name: widget.comment.userName),),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
@@ -383,6 +383,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                   UserAvatar(
                     url: ref.read(currentUserAvatarUrlProvider) ?? '',
                     radius: 16,
+                    name: ref.read(currentUserNameProvider),
                   ),
                   const SizedBox(width: 8),
                   Expanded(

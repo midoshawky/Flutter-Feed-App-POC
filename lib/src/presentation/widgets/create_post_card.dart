@@ -239,7 +239,7 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
               final rowChild = Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  UserAvatar(url: currentUserAvatar ?? ''),
+                  UserAvatar(url: currentUserAvatar ?? '', name: currentUser),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(

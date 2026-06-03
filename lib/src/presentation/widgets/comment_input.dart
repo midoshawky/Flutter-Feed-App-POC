@@ -90,7 +90,8 @@ class _CommentInputState extends ConsumerState<CommentInput> {
   @override
   Widget build(BuildContext context) {
     final isMobile = ResponsiveLayout.isMobile(context);
-    final user = MockDataService.users[1]; // Sara Hany
+    final currentUserAvatar = ref.watch(currentUserAvatarUrlProvider) ?? '';
+    final currentUserName = ref.watch(currentUserNameProvider);
 
     if (isMobile) {
       return Container(
@@ -102,7 +103,7 @@ class _CommentInputState extends ConsumerState<CommentInput> {
         child: Row(
           children: [
             if (!widget.isReply) ...[
-              UserAvatar(url: user.avatarUrl, radius: 22),
+              UserAvatar(url: currentUserAvatar, radius: 22, name: currentUserName),
               const SizedBox(width: 8),
             ],
             if (widget.isReply && widget.replyToUsername != null)
@@ -205,7 +206,7 @@ class _CommentInputState extends ConsumerState<CommentInput> {
 
     return Row(
       children: [
-        UserAvatar(url: user.avatarUrl, radius: 20),
+        UserAvatar(url: currentUserAvatar, radius: 20, name: currentUserName),
         const SizedBox(width: 8),
         Expanded(
           child: Container(

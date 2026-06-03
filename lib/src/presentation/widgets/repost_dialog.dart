@@ -112,6 +112,7 @@ class _RepostDialogState extends ConsumerState<_RepostDialog> {
   @override
   Widget build(BuildContext context) {
     final currentUserAvatar = ref.read(currentUserAvatarUrlProvider) ?? '';
+    final currentUserName = ref.read(currentUserNameProvider);
 
     final isMobile = ResponsiveLayout.isMobile(context);
 
@@ -145,7 +146,7 @@ class _RepostDialogState extends ConsumerState<_RepostDialog> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              UserAvatar(url: currentUserAvatar, radius: 20),
+              UserAvatar(url: currentUserAvatar, radius: 20, name: currentUserName),
               const SizedBox(width: 12),
               Expanded(
                 child: FlutterTagger(

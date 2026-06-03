@@ -43,6 +43,7 @@ class _FeedScreenState extends State<FeedScreen> {
     String? effectiveToken = widget.authToken;
     String effectiveUserId = widget.currentUserId;
     String effectiveUserName = widget.currentUserName;
+    String? effectiveAvatarUrl = widget.currentUserAvatarUrl;
 
     if (kIsWeb) {
       final uri = Uri.base;
@@ -55,6 +56,9 @@ class _FeedScreenState extends State<FeedScreen> {
       if (uri.queryParameters.containsKey('user_name')) {
         effectiveUserName = uri.queryParameters['user_name']!;
       }
+      if (uri.queryParameters.containsKey('avatar_url')) {
+        effectiveAvatarUrl = uri.queryParameters['avatar_url'];
+      }
     }
 
     _container = ProviderContainer(
@@ -64,9 +68,7 @@ class _FeedScreenState extends State<FeedScreen> {
         ),
         currentUserIdProvider.overrideWithValue(effectiveUserId),
         currentUserNameProvider.overrideWithValue(effectiveUserName),
-        currentUserAvatarUrlProvider.overrideWithValue(
-          'https://i.pravatar.cc/150?u=$effectiveUserId',
-        ),
+        currentUserAvatarUrlProvider.overrideWithValue(effectiveAvatarUrl),
       ],
     );
   }
@@ -252,7 +254,7 @@ class MobileCreatePostTrigger extends ConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          UserAvatar(url: currentUserAvatar ?? ''),
+          UserAvatar(url: currentUserAvatar ?? '', name: currentUserName),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
