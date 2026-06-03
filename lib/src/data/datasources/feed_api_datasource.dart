@@ -146,7 +146,7 @@ class FeedApiDataSource {
   }
 
   Future<void> updateComment(String commentId, String text) async {
-    await _client.dio.put('/api/comments/$commentId', data: {'text': text});
+    await _client.dio.post('/api/comments/$commentId', data: {'text': text});
   }
 
   // ── Follows ──────────────────────────────────────────────────────────────────
