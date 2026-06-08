@@ -2,7 +2,6 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/post_entity.dart';
 import '../../domain/entities/comment_entity.dart';
-import 'feed_providers.dart';
 import 'di_providers.dart';
 
 final optimisticFeedProvider =
@@ -12,9 +11,64 @@ final optimisticFeedProvider =
 
 class OptimisticFeedNotifier
     extends Notifier<AsyncValue<List<PostEntity>>> {
+  int _currentPage = 1;
+  bool _hasMore = true;
+  bool _isLoadingMore = false;
+  final _loadedCommentPostIds = <String>{};
+  final _loadingCommentPostIds = <String>{};
+
   @override
   AsyncValue<List<PostEntity>> build() {
-    return ref.watch(feedStreamProvider);
+    _loadPage(1);
+    return const AsyncValue.loading();
+  }
+
+  bool get hasMore => _hasMore;
+  bool get isLoadingMore => _isLoadingMore;
+  bool isLoadingCommentsForPost(String postId) =>
+      _loadingCommentPostIds.contains(postId);
+
+  Future<void> _loadPage(int page) async {
+    try {
+      final posts = await ref
+          .read(getFeedUseCaseProvider)
+          .call(page: page, limit: 10);
+      final current = page == 1 ? <PostEntity>[] : (state.value ?? []);
+      state = AsyncValue.data([...current, ...posts]);
+      _currentPage = page;
+      _hasMore = posts.length >= 10;
+    } catch (e, s) {
+      if (page == 1) state = AsyncValue.error(e, s);
+      // On subsequent pages, keep existing data and swallow the error
+    }
+  }
+
+  Future<void> loadMore() async {
+    if (_isLoadingMore || !_hasMore) return;
+    _isLoadingMore = true;
+    await _loadPage(_currentPage + 1);
+    _isLoadingMore = false;
+  }
+
+  /// Lazy-load comments for a single post — fetches only once per session.
+  Future<void> loadCommentsForPost(String postId) async {
+    if (_loadedCommentPostIds.contains(postId)) return;
+    _loadedCommentPostIds.add(postId);
+    _loadingCommentPostIds.add(postId);
+    try {
+      final comments =
+          await ref.read(getPostCommentsUseCaseProvider).call(postId);
+      _loadingCommentPostIds.remove(postId);
+      final posts = state.value;
+      if (posts == null) return;
+      state = AsyncValue.data([
+        for (final p in posts)
+          if (p.id == postId) p.copyWith(comments: comments) else p,
+      ]);
+    } catch (_) {
+      _loadingCommentPostIds.remove(postId);
+      _loadedCommentPostIds.remove(postId); // allow retry on next open
+    }
   }
 
   /// Create a new post — optimistically prepends it, then refreshes from server.
@@ -57,10 +111,8 @@ class OptimisticFeedNotifier
             tags: tags,
             mediaBytes: mediaBytes,
           );
-      // Replace optimistic post with real server data (no loading state emitted).
-      final freshPosts =
-          await ref.read(getFeedUseCaseProvider).call().first;
-      state = AsyncValue.data(freshPosts);
+      _loadedCommentPostIds.clear();
+      await _loadPage(1);
     } catch (e) {
       state = oldState;
       rethrow;
@@ -200,10 +252,8 @@ class OptimisticFeedNotifier
             addedText: addedText,
             originalPost: originalPost,
           );
-      // Refresh to replace the pending repost with the real one from server.
-      final freshPosts =
-          await ref.read(getFeedUseCaseProvider).call().first;
-      state = AsyncValue.data(freshPosts);
+      _loadedCommentPostIds.clear();
+      await _loadPage(1);
     } catch (e) {
       state = oldState;
       rethrow;
@@ -211,7 +261,8 @@ class OptimisticFeedNotifier
   }
 
   /// Optimistically update a post
-  Future<void> updatePost(String postId, String content) async {
+  Future<void> updatePost(String postId, String content,
+      {String? type}) async {
     final oldState = state;
     final currentPosts = state.value;
     if (currentPosts == null) return;
@@ -222,7 +273,9 @@ class OptimisticFeedNotifier
     ]);
 
     try {
-      await ref.read(updatePostUseCaseProvider).call(postId, content);
+      await ref
+          .read(updatePostUseCaseProvider)
+          .call(postId, content, type: type);
     } catch (e) {
       state = oldState;
       rethrow;
@@ -322,9 +375,12 @@ class OptimisticFeedNotifier
     ];
   }
 
-  /// Re-fetch the feed from the server
+  /// Re-fetch the feed from page 1
   Future<void> refresh() async {
-    ref.invalidate(feedStreamProvider);
+    _loadedCommentPostIds.clear();
+    _loadingCommentPostIds.clear();
+    state = const AsyncValue.loading();
+    await _loadPage(1);
   }
 
   /// Optimistically toggle follow
@@ -336,12 +392,13 @@ class OptimisticFeedNotifier
     state = AsyncValue.data([
       for (final post in currentPosts)
         post.copyWith(
-          user: post.user?.id == userId 
-              ? post.user?.copyWith(isFollowing: !isFollowing) 
+          user: post.user?.id == userId
+              ? post.user?.copyWith(isFollowing: !isFollowing)
               : post.user,
           repostedFrom: post.repostedFrom?.user?.id == userId
               ? post.repostedFrom?.copyWith(
-                  user: post.repostedFrom?.user?.copyWith(isFollowing: !isFollowing),
+                  user: post.repostedFrom?.user
+                      ?.copyWith(isFollowing: !isFollowing),
                 )
               : post.repostedFrom,
         ),

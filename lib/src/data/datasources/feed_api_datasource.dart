@@ -13,33 +13,17 @@ class FeedApiDataSource {
 
   // ── Posts ───────────────────────────────────────────────────────────────────
 
-  Future<List<PostDto>> getFeedPosts({int limit = 20}) async {
+  Future<List<PostDto>> getFeedPosts({int page = 1, int limit = 10}) async {
     final response = await _client.dio.get(
       '/api/posts',
-      queryParameters: {'per_page': limit},
+      queryParameters: {'per_page': limit, 'page': page},
     );
     final List<dynamic> items = response.data['data'] as List? ?? [];
-    
-    // Parse initial DTOs and cache users
-    final initialPosts = items.map((item) {
+    return items.map((item) {
       final json = item as Map<String, dynamic>;
       _cacheUserFromJson(json['user'] as Map<String, dynamic>?);
       return PostDto.fromJson(json);
     }).toList();
-
-    // Fetch comments in parallel only for posts that don't have them
-    return await Future.wait(initialPosts.map((dto) async {
-      if (dto.comments.isEmpty) {
-        try {
-          final comments = await getPostComments(dto.id);
-          return dto.copyWith(comments: comments);
-        } catch (e) {
-          // If comment fetch fails, return post as is
-          return dto;
-        }
-      }
-      return dto;
-    }));
   }
 
   Future<PostDto?> getPostById(String postId) async {

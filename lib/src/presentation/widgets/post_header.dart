@@ -181,13 +181,24 @@ class PostHeader extends ConsumerWidget {
     } else {
       showDialog(
         context: context,
-        builder: (context) => UncontrolledProviderScope(
+        builder: (dialogContext) => UncontrolledProviderScope(
           container: container,
           child: Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
+            insetPadding:
+                const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
             child: SizedBox(
               width: 600,
-              child: CreatePostCard(postToEdit: post),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight:
+                      MediaQuery.of(dialogContext).size.height * 0.85,
+                ),
+                child: SingleChildScrollView(
+                  child: CreatePostCard(postToEdit: post),
+                ),
+              ),
             ),
           ),
         ),
@@ -208,7 +219,7 @@ class PostHeader extends ConsumerWidget {
         Stack(
           clipBehavior: Clip.none,
           children: [
-            UserAvatar(url: user.avatarUrl),
+            UserAvatar(url: user.avatarUrl,name:user.name),
             if (isMobile && !isCurrentUser)
               Positioned(
                 bottom: 0,
@@ -253,7 +264,7 @@ class PostHeader extends ConsumerWidget {
                     child: Text(
                       isMobile
                           ? '• ${_getTimeAgo(post.timestamp)}'
-                          : '${user.username} • ${_getTimeAgo(post.timestamp)}',
+                          : '@${user.username} • ${_getTimeAgo(post.timestamp)}',
                       style: const TextStyle(
                         color: Color(0xFF787878),
                         fontSize: 14,
@@ -266,7 +277,7 @@ class PostHeader extends ConsumerWidget {
               if (isMobile) const SizedBox(height: 2),
               if (isMobile)
                 Text(
-                  user.username,
+                  '@${user.username}',
                   style: const TextStyle(
                     color: Color(0xFF787878),
                     fontSize: 14,

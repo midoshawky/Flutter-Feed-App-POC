@@ -4,7 +4,6 @@ import '../../models/post.dart';
 import '../../domain/entities/comment_entity.dart';
 import '../providers/di_providers.dart';
 import '../providers/optimistic_feed_provider.dart';
-import '../../services/mock_data_service.dart';
 import '../../utils/responsive_layout.dart';
 import 'user_avatar.dart';
 
@@ -31,11 +30,14 @@ class CommentInput extends ConsumerStatefulWidget {
 class _CommentInputState extends ConsumerState<CommentInput> {
   final TextEditingController _commentController = TextEditingController();
   bool _isLoading = false;
+  bool _isEmpty = true;
 
   @override
   void initState() {
     _commentController.addListener(() {
-      setState(() {});
+      setState(() {
+        _isEmpty = _commentController.text.trim().isEmpty;
+      });
     });
     super.initState();
   }
@@ -56,8 +58,10 @@ class _CommentInputState extends ConsumerState<CommentInput> {
     final userName = ref.read(currentUserNameProvider);
     final comment = CommentEntity(
       id: '',
-      userId: userId.isNotEmpty ? userId : '2',
-      userName: userName.isNotEmpty ? userName : MockDataService.users[1].name,
+      userId: userId,
+      userName: userName,
+      userUsername: ref.read(currentUserUsernameProvider),
+      userAvatarUrl: ref.read(currentUserAvatarUrlProvider) ?? '',
       text: text,
       timestamp: DateTime.now(),
     );
@@ -165,7 +169,7 @@ class _CommentInputState extends ConsumerState<CommentInput> {
             ),
             const SizedBox(width: 8),
             ElevatedButton(
-              onPressed: _isLoading ? null : _submitComment,
+              onPressed: _isLoading || _isEmpty ? null : _submitComment,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4535C1),
                 foregroundColor: const Color(0xFFF5F5F5),

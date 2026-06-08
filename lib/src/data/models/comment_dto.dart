@@ -4,6 +4,8 @@ class CommentDto {
   final String id;
   final String userId;
   final String userName;
+  final String userUsername;
+  final String userAvatarUrl;
   final String text;
   final DateTime timestamp;
   final int likesCount;
@@ -13,6 +15,8 @@ class CommentDto {
     required this.id,
     required this.userId,
     required this.userName,
+    this.userUsername = '',
+    this.userAvatarUrl = '',
     required this.text,
     required this.timestamp,
     this.likesCount = 0,
@@ -21,7 +25,6 @@ class CommentDto {
 
   factory CommentDto.fromJson(Map<String, dynamic> json, {int depth = 0}) {
     if (depth > 10) {
-      // Prevent infinite recursion from circular replies
       return CommentDto(
         id: json['id'].toString(),
         userId: json['user_id'].toString(),
@@ -35,6 +38,8 @@ class CommentDto {
       id: json['id'].toString(),
       userId: json['user_id'].toString(),
       userName: user?['name'] as String? ?? '',
+      userUsername: user?['username'] as String? ?? '',
+      userAvatarUrl: user?['profile_picture_url'] as String? ?? '',
       text: json['text'] as String? ?? '',
       likesCount: (json['likes_count'] as num?)?.toInt() ?? 0,
       timestamp: json['created_at'] != null
@@ -51,6 +56,8 @@ class CommentDto {
       id: id,
       userId: userId,
       userName: userName,
+      userUsername: userUsername,
+      userAvatarUrl: userAvatarUrl,
       text: text,
       timestamp: timestamp,
       likesCount: likesCount,

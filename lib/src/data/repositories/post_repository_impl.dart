@@ -11,11 +11,9 @@ class PostRepositoryImpl implements PostRepository {
   PostRepositoryImpl(this._datasource);
 
   @override
-  Stream<List<PostEntity>> getFeed({int limit = 20}) async* {
-    final dtos = await _datasource.getFeedPosts(limit: limit);
-    
-    // Fetch original posts for reposts in parallel
-    final posts = await Future.wait(dtos.map((dto) async {
+  Future<List<PostEntity>> getFeed({int page = 1, int limit = 10}) async {
+    final dtos = await _datasource.getFeedPosts(page: page, limit: limit);
+    return Future.wait(dtos.map((dto) async {
       PostEntity? repostedFrom;
       if (dto.repostedFromDto != null) {
         repostedFrom = dto.repostedFromDto!.toEntity();
@@ -23,14 +21,16 @@ class PostRepositoryImpl implements PostRepository {
         try {
           final origDto = await _datasource.getPostById(dto.repostedFromId!);
           if (origDto != null) repostedFrom = origDto.toEntity();
-        } catch (_) {
-          // If fetch fails, we just don't show the repost preview
-        }
+        } catch (_) {}
       }
       return dto.toEntity(repostedFrom: repostedFrom);
     }));
-    
-    yield posts;
+  }
+
+  @override
+  Future<List<CommentEntity>> getPostComments(String postId) async {
+    final dtos = await _datasource.getPostComments(postId);
+    return dtos.map((d) => d.toEntity()).toList();
   }
 
   @override
@@ -95,8 +95,9 @@ class PostRepositoryImpl implements PostRepository {
   }
 
   @override
-  Future<void> updatePost(String postId, String content) async {
-    await _datasource.updatePost(postId, content: content);
+  Future<void> updatePost(String postId, String content,
+      {String? type}) async {
+    await _datasource.updatePost(postId, content: content, type: type);
   }
 
   @override

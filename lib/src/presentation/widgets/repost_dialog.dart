@@ -30,7 +30,8 @@ void showRepostDialog(BuildContext context, WidgetRef ref, Post post) {
       context: context,
       builder: (ctx) => UncontrolledProviderScope(
         container: container,
-        child: _RepostDialog(post: post),
+        child: IntrinsicHeight(child
+        :_RepostDialog(post: post)),
       ),
     );
   }
@@ -259,8 +260,8 @@ class _RepostDialogState extends ConsumerState<_RepostDialog> {
               onPressed: _isLoading ? null : _submit,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4535C1),
-                foregroundColor: const Color(0xFFF5F5F5),
-                fixedSize: Size.fromHeight(40),
+                foregroundColor: const Color.fromRGBO(245, 245, 245, 1),
+                fixedSize: Size.fromHeight(45),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

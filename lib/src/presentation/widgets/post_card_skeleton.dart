@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
 
-/// A widget that renders a shimmering animated placeholder.
-class _ShimmerBox extends StatefulWidget {
+/// Reusable shimmering animated placeholder box.
+class ShimmerBox extends StatefulWidget {
   final double width;
   final double height;
   final double borderRadius;
 
-  const _ShimmerBox({
+  const ShimmerBox({
+    super.key,
     required this.width,
     required this.height,
     this.borderRadius = 8,
   });
 
   @override
-  State<_ShimmerBox> createState() => _ShimmerBoxState();
+  State<ShimmerBox> createState() => _ShimmerBoxState();
 }
 
-class _ShimmerBoxState extends State<_ShimmerBox>
+class _ShimmerBoxState extends State<ShimmerBox>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
   late final Animation<double> _anim;
@@ -93,26 +94,25 @@ class PostCardSkeleton extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const _ShimmerBox(width: 48, height: 48, borderRadius: 100),
+                  const ShimmerBox(width: 48, height: 48, borderRadius: 100),
                   const SizedBox(width: 8),
-                  const _ShimmerBox(width: 206, height: 12, borderRadius: 16),
+                  const ShimmerBox(width: 206, height: 12, borderRadius: 16),
                 ],
               ),
-              // Follow + more placeholder (opacity 0 → invisible but keeps space)
             ],
           ),
           const SizedBox(height: 16),
           // ── Text bars ────────────────────────────────────────────────────
-          const _ShimmerBox(
+          const ShimmerBox(
             width: double.infinity,
             height: 12,
             borderRadius: 16,
           ),
           const SizedBox(height: 8),
-          const _ShimmerBox(width: 345, height: 12, borderRadius: 16),
+          const ShimmerBox(width: 345, height: 12, borderRadius: 16),
           const SizedBox(height: 16),
           // ── Image placeholder ─────────────────────────────────────────────
-          const _ShimmerBox(
+          const ShimmerBox(
             width: double.infinity,
             height: 328,
             borderRadius: 16,
@@ -125,9 +125,9 @@ class PostCardSkeleton extends StatelessWidget {
             children: List.generate(
               3,
               (i) => [
-                const _ShimmerBox(width: 24, height: 24, borderRadius: 100),
+                const ShimmerBox(width: 24, height: 24, borderRadius: 100),
                 const SizedBox(width: 8),
-                const _ShimmerBox(width: 30, height: 8, borderRadius: 16),
+                const ShimmerBox(width: 30, height: 8, borderRadius: 16),
                 if (i < 2) const SizedBox(width: 24),
               ],
             ).expand((e) => e).toList(),

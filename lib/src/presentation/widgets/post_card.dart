@@ -109,7 +109,6 @@ class _PostCardState extends ConsumerState<PostCard> {
                             ),
                           ),
                         ),
-                      if (currentPost.comments.isNotEmpty)
                         Expanded(
                           child: SingleChildScrollView(
                             controller: scrollController,
@@ -201,10 +200,18 @@ class _PostCardState extends ConsumerState<PostCard> {
               onCommentPressed: () {
                 if (isMobile) {
                   _showCommentSheet(context);
+                  ref
+                      .read(optimisticFeedProvider.notifier)
+                      .loadCommentsForPost(widget.post.id);
                 } else {
                   setState(() {
                     _showComments = !_showComments;
                   });
+                  if (_showComments) {
+                    ref
+                        .read(optimisticFeedProvider.notifier)
+                        .loadCommentsForPost(widget.post.id);
+                  }
                 }
               },
             ),

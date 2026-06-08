@@ -5,7 +5,6 @@ import '../../models/comment.dart';
 import '../../domain/entities/comment_entity.dart';
 import '../providers/di_providers.dart';
 import '../providers/optimistic_feed_provider.dart';
-import '../../services/mock_data_service.dart';
 import '../../utils/responsive_layout.dart';
 import 'user_avatar.dart';
 
@@ -15,6 +14,9 @@ class CommentItem extends ConsumerStatefulWidget {
 
   /// Post ID needed to dispatch to the provider
   final String postId;
+
+  /// User ID of the post author — used to determine delete permission for post owners.
+  final String postOwnerId;
 
   /// ID of the direct parent comment (for nested replies, this is the top-level comment ID)
   final String parentCommentId;
@@ -26,6 +28,7 @@ class CommentItem extends ConsumerStatefulWidget {
     super.key,
     required this.comment,
     required this.postId,
+    required this.postOwnerId,
     required this.parentCommentId,
     this.isReply = false,
     this.onReplyTap,
@@ -89,6 +92,8 @@ class _CommentItemState extends ConsumerState<CommentItem> {
       id: '',
       userId: ref.read(currentUserIdProvider),
       userName: ref.read(currentUserNameProvider),
+      userUsername: ref.read(currentUserUsernameProvider),
+      userAvatarUrl: ref.read(currentUserAvatarUrlProvider) ?? '',
       text: text,
       timestamp: DateTime.now(),
     );
@@ -116,11 +121,13 @@ class _CommentItemState extends ConsumerState<CommentItem> {
 
   @override
   Widget build(BuildContext context) {
-    final user = MockDataService.getUserById(widget.comment.userId);
-    final avatarUrl = user?.avatarUrl ?? 'https://i.pravatar.cc/150';
-    final handle = user?.username ?? '@user';
+    final avatarUrl = widget.comment.userAvatarUrl;
+    final handle = widget.comment.userUsername.isNotEmpty
+        ? '@${widget.comment.userUsername}'
+        : '';
     final currentUserId = ref.read(currentUserIdProvider);
-    final isCurrentUser = widget.comment.userId == currentUserId;
+    final isCommentOwner = widget.comment.userId == currentUserId;
+    final isPostOwner = widget.postOwnerId == currentUserId;
 
     final isHighlighted = widget.replyingToId == widget.comment.id;
 
@@ -172,36 +179,36 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                             fontSize: 12,
                           ),
                         ),
-                        if (isCurrentUser) Spacer(),
-                        if (isCurrentUser)
-                          PopupMenuButton<String>(
-                            icon: const Icon(
-                              Icons.more_horiz,
-                              color: Color(0xFF787878),
-                            ),
-                            iconSize: 18,
-                            padding: EdgeInsets.zero,
-                            position: PopupMenuPosition.under,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            onSelected: (value) {
-                              if (value == 'delete') {
-                                ref
-                                    .read(optimisticFeedProvider.notifier)
-                                    .deleteComment(
-                                      widget.postId,
-                                      widget.comment.id,
-                                    );
-                              } else if (value == 'edit') {
-                                setState(() {
-                                  _isEditing = true;
-                                  _editController.text = widget.comment.text;
-                                });
-                                Future.microtask(() => _editFocus.requestFocus());
-                              }
-                            },
-                            itemBuilder: (context) => [
+                        const Spacer(),
+                        PopupMenuButton<String>(
+                          icon: const Icon(
+                            Icons.more_horiz,
+                            color: Color(0xFF787878),
+                          ),
+                          iconSize: 18,
+                          padding: EdgeInsets.zero,
+                          position: PopupMenuPosition.under,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          onSelected: (value) {
+                            if (value == 'delete') {
+                              ref
+                                  .read(optimisticFeedProvider.notifier)
+                                  .deleteComment(
+                                    widget.postId,
+                                    widget.comment.id,
+                                  );
+                            } else if (value == 'edit') {
+                              setState(() {
+                                _isEditing = true;
+                                _editController.text = widget.comment.text;
+                              });
+                              Future.microtask(() => _editFocus.requestFocus());
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            if (isCommentOwner) ...[
                               PopupMenuItem(
                                 value: 'edit',
                                 child: Row(
@@ -213,17 +220,16 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                                       height: 20,
                                     ),
                                     const SizedBox(width: 12),
-                                    Text(
+                                    const Text(
                                       'Edit',
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: const Color(0xFF1F1F1F),
+                                        color: Color(0xFF1F1F1F),
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-
                               PopupMenuItem(
                                 value: 'delete',
                                 child: Row(
@@ -235,18 +241,86 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                                       height: 20,
                                     ),
                                     const SizedBox(width: 12),
-                                    Text(
+                                    const Text(
                                       'Delete',
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: const Color(0xFF1F1F1F),
+                                        color: Color(0xFF1F1F1F),
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
                             ],
-                          ),
+                            if (!isCommentOwner && isPostOwner) ...[
+                              PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    SvgPicture.asset(
+                                      'assets/icons/delete.svg',
+                                      package: 'feed_module',
+                                      width: 20,
+                                      height: 20,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Delete',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Color(0xFF1F1F1F),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'report',
+                                child: Row(
+                                  children: [
+                                    SvgPicture.asset(
+                                      'assets/icons/report.svg',
+                                      package: 'feed_module',
+                                      width: 20,
+                                      height: 20,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Report',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Color(0xFF1F1F1F),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            if (!isCommentOwner && !isPostOwner) ...[
+                              PopupMenuItem(
+                                value: 'report',
+                                child: Row(
+                                  children: [
+                                    SvgPicture.asset(
+                                      'assets/icons/report.svg',
+                                      package: 'feed_module',
+                                      width: 20,
+                                      height: 20,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Report',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Color(0xFF1F1F1F),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ],
                     ),
                     // Comment text / inline edit field
@@ -439,6 +513,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
               (reply) => CommentItem(
                 comment: reply,
                 postId: widget.postId,
+                postOwnerId: widget.postOwnerId,
                 // Replies always point to the top-level comment, not themselves,
                 // so the provider can find the correct parent.
                 parentCommentId: widget.parentCommentId,

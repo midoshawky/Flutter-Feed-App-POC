@@ -136,7 +136,7 @@ class PostMedia extends StatelessWidget {
                                 bottomRight: Radius.circular(16),
                               ),
                             ),
-                            ClipRRect(
+                            GestureDetector(child:ClipRRect(
                               borderRadius: const BorderRadius.only(
                                 bottomRight: Radius.circular(16),
                               ),
@@ -152,7 +152,7 @@ class PostMedia extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                            ),
+                            ),onTap : ()=> _openSlider(context, urls, 2))
                           ],
                         )
                       : _buildCroppedImage(

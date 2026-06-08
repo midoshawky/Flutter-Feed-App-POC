@@ -4,6 +4,8 @@ class CommentEntity {
   final String id;
   final String userId;
   final String userName;
+  final String userUsername;
+  final String userAvatarUrl;
   final String text;
   final DateTime timestamp;
   final List<CommentEntity> replies;
@@ -13,6 +15,8 @@ class CommentEntity {
     required this.id,
     required this.userId,
     required this.userName,
+    this.userUsername = '',
+    this.userAvatarUrl = '',
     required this.text,
     required this.timestamp,
     this.replies = const [],
@@ -28,6 +32,8 @@ class CommentEntity {
       id: id,
       userId: userId,
       userName: userName,
+      userUsername: userUsername,
+      userAvatarUrl: userAvatarUrl,
       text: text ?? this.text,
       timestamp: timestamp,
       replies: replies ?? this.replies,
@@ -40,6 +46,8 @@ class CommentEntity {
       id: id,
       userId: userId,
       userName: userName,
+      userUsername: userUsername,
+      userAvatarUrl: userAvatarUrl,
       text: text,
       timestamp: timestamp,
       likesCount: likesCount,

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fluttertagger/fluttertagger.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../data/models/post_dto.dart';
 import '../../domain/entities/post_entity.dart';
 import '../providers/di_providers.dart';
 import '../providers/optimistic_feed_provider.dart';
@@ -26,7 +27,10 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
 
-  // Picked images as bytes (works on all platforms including web)
+  // Existing media URLs loaded from the post being edited
+  final List<String> _existingMediaUrls = [];
+
+  // Newly picked images as bytes (works on all platforms including web)
   final List<Uint8List> _attachedMedia = [];
 
   // Dummy tags
@@ -49,6 +53,7 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
     if (widget.postToEdit != null) {
       _controller.text = widget.postToEdit!.content;
       _isHasInput = widget.postToEdit!.content.isNotEmpty;
+      _existingMediaUrls.addAll(widget.postToEdit!.mediaUrls);
     }
     _controller.addListener(() {
       setState(() {
@@ -63,10 +68,12 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
     super.dispose();
   }
 
+  void _removeExistingMedia(int index) {
+    setState(() => _existingMediaUrls.removeAt(index));
+  }
+
   void _removeMedia(int index) {
-    setState(() {
-      _attachedMedia.removeAt(index);
-    });
+    setState(() => _attachedMedia.removeAt(index));
   }
 
   Future<void> _pickImages() async {
@@ -97,31 +104,37 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
     });
   }
 
+  PostTypeEntity _resolveType() {
+    final totalMedia = _existingMediaUrls.length + _attachedMedia.length;
+    if (totalMedia == 0) return PostTypeEntity.text;
+    if (totalMedia == 1) return PostTypeEntity.image;
+    return PostTypeEntity.multiImage;
+  }
+
   Future<void> _handlePost() async {
     final text = _controller.text.trim();
-    if (text.isEmpty && _attachedMedia.isEmpty) return;
+    final totalMedia = _existingMediaUrls.length + _attachedMedia.length;
+    if (text.isEmpty && totalMedia == 0) return;
 
     setState(() => _isLoading = true);
 
     try {
       final tags = _controller.tags.map((t) => '#${t.text}').toList();
       final userId = ref.read(currentUserIdProvider);
+      final type = _resolveType();
 
       if (widget.postToEdit != null) {
         await ref
             .read(optimisticFeedProvider.notifier)
-            .updatePost(widget.postToEdit!.id, text);
+            .updatePost(widget.postToEdit!.id, text,
+                type: PostDto.typeToString(type));
       } else {
         await ref
             .read(optimisticFeedProvider.notifier)
             .createPost(
               userId: userId.isNotEmpty ? userId : '2',
               content: text,
-              type: _attachedMedia.isEmpty
-                  ? PostTypeEntity.text
-                  : _attachedMedia.length == 1
-                  ? PostTypeEntity.image
-                  : PostTypeEntity.multiImage,
+              type: type,
               tags: tags,
               mediaBytes: List.from(_attachedMedia),
             );
@@ -326,15 +339,30 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
           ],
 
           // ── Media attachment previews ─────────────────────────────────────
-          if (_attachedMedia.isNotEmpty) ...[
+          if (_existingMediaUrls.isNotEmpty || _attachedMedia.isNotEmpty) ...[
             const SizedBox(height: 16),
             SizedBox(
               height: 168,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: _attachedMedia.length,
+                itemCount: _existingMediaUrls.length + _attachedMedia.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 8),
                 itemBuilder: (context, index) {
+                  final isExisting = index < _existingMediaUrls.length;
+                  final Widget image = isExisting
+                      ? Image.network(
+                          _existingMediaUrls[index],
+                          width: 168,
+                          height: 168,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.memory(
+                          _attachedMedia[index - _existingMediaUrls.length],
+                          width: 168,
+                          height: 168,
+                          fit: BoxFit.cover,
+                        );
+
                   return Stack(
                     children: [
                       Container(
@@ -349,19 +377,19 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8.96),
-                          child: Image.memory(
-                            _attachedMedia[index],
-                            width: 168,
-                            height: 168,
-                            fit: BoxFit.cover,
-                          ),
+                          child: image,
                         ),
                       ),
                       Positioned(
                         top: 8,
                         right: 8,
                         child: GestureDetector(
-                          onTap: _isLoading ? null : () => _removeMedia(index),
+                          onTap: _isLoading
+                              ? null
+                              : () => isExisting
+                                  ? _removeExistingMedia(index)
+                                  : _removeMedia(
+                                      index - _existingMediaUrls.length),
                           child: Container(
                             width: 24,
                             height: 24,
@@ -428,7 +456,12 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
               ),
               const Spacer(),
               ElevatedButton(
-                onPressed: _isLoading || !_isHasInput ? null : _handlePost,
+                onPressed: _isLoading ||
+                      (!_isHasInput &&
+                          _existingMediaUrls.isEmpty &&
+                          _attachedMedia.isEmpty)
+                  ? null
+                  : _handlePost,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4535C1),
                   foregroundColor: const Color(0xFFF5F5F5),

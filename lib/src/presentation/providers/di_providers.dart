@@ -23,6 +23,8 @@ final currentUserIdProvider = Provider<String>((ref) => '');
 /// Display name of the current user (used in optimistic comment/reply display).
 final currentUserNameProvider = Provider<String>((ref) => '');
 
+final currentUserUsernameProvider = Provider<String>((ref) => '');
+
 final currentUserAvatarUrlProvider = Provider<String?>((ref) => null);
 
 // ── Infrastructure ────────────────────────────────────────────────────────────
@@ -62,6 +64,10 @@ final repostUseCaseProvider = Provider<RepostUseCase>((ref) {
 
 final addCommentUseCaseProvider = Provider<AddCommentUseCase>((ref) {
   return AddCommentUseCase(ref.watch(postRepositoryProvider));
+});
+
+final getPostCommentsUseCaseProvider = Provider<GetPostCommentsUseCase>((ref) {
+  return GetPostCommentsUseCase(ref.watch(postRepositoryProvider));
 });
 
 final addReplyUseCaseProvider = Provider<AddReplyUseCase>((ref) {

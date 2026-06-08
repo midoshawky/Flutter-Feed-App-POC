@@ -19,6 +19,7 @@ class FeedScreen extends StatefulWidget {
   final String? authToken;
   final String currentUserId;
   final String currentUserName;
+  final String currentUserUsername;
   final String? currentUserAvatarUrl;
 
   const FeedScreen({
@@ -26,6 +27,7 @@ class FeedScreen extends StatefulWidget {
     this.authToken,
     this.currentUserId = '',
     this.currentUserName = '',
+    this.currentUserUsername = '',
     this.currentUserAvatarUrl,
   });
 
@@ -43,6 +45,7 @@ class _FeedScreenState extends State<FeedScreen> {
     String? effectiveToken = widget.authToken;
     String effectiveUserId = widget.currentUserId;
     String effectiveUserName = widget.currentUserName;
+    String effectiveUserUsername = widget.currentUserUsername;
     String? effectiveAvatarUrl = widget.currentUserAvatarUrl;
 
     if (kIsWeb) {
@@ -56,6 +59,9 @@ class _FeedScreenState extends State<FeedScreen> {
       if (uri.queryParameters.containsKey('user_name')) {
         effectiveUserName = uri.queryParameters['user_name']!;
       }
+      if (uri.queryParameters.containsKey('username')) {
+        effectiveUserUsername = uri.queryParameters['username']!;
+      }
       if (uri.queryParameters.containsKey('avatar_url')) {
         effectiveAvatarUrl = uri.queryParameters['avatar_url'];
       }
@@ -68,6 +74,7 @@ class _FeedScreenState extends State<FeedScreen> {
         ),
         currentUserIdProvider.overrideWithValue(effectiveUserId),
         currentUserNameProvider.overrideWithValue(effectiveUserName),
+        currentUserUsernameProvider.overrideWithValue(effectiveUserUsername),
         currentUserAvatarUrlProvider.overrideWithValue(effectiveAvatarUrl),
       ],
     );
@@ -88,10 +95,46 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 }
 
-class _FeedScreenBody extends ConsumerWidget {
+class _FeedScreenBody extends ConsumerStatefulWidget {
   const _FeedScreenBody();
 
-  void _showCreatePostSheet(BuildContext context, WidgetRef ref) {
+  @override
+  ConsumerState<_FeedScreenBody> createState() => _FeedScreenBodyState();
+}
+
+class _FeedScreenBodyState extends ConsumerState<_FeedScreenBody> {
+  final _scrollController = ScrollController();
+  bool _isLoadingMore = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _triggerLoadMore();
+    }
+  }
+
+  Future<void> _triggerLoadMore() async {
+    if (_isLoadingMore) return;
+    final notifier = ref.read(optimisticFeedProvider.notifier);
+    if (!notifier.hasMore) return;
+    setState(() => _isLoadingMore = true);
+    await notifier.loadMore();
+    if (mounted) setState(() => _isLoadingMore = false);
+  }
+
+  void _showCreatePostSheet(BuildContext context) {
     final container = ProviderScope.containerOf(context);
     showModalBottomSheet(
       context: context,
@@ -101,8 +144,8 @@ class _FeedScreenBody extends ConsumerWidget {
       builder: (sheetContext) => UncontrolledProviderScope(
         container: container,
         child: DraggableScrollableSheet(
-          initialChildSize: 0.5,
-          minChildSize: 0.5,
+          initialChildSize: 0.8,
+          minChildSize: 0.8,
           maxChildSize: 0.95,
           builder: (sheetContext, scrollController) => Padding(
             padding: EdgeInsets.only(
@@ -145,7 +188,7 @@ class _FeedScreenBody extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final feedAsync = ref.watch(optimisticFeedProvider);
     final isMobile = ResponsiveLayout.isMobile(context);
 
@@ -153,7 +196,7 @@ class _FeedScreenBody extends ConsumerWidget {
       backgroundColor: Colors.white,
       floatingActionButton: isMobile
           ? FloatingActionButton(
-              onPressed: () => _showCreatePostSheet(context, ref),
+              onPressed: () => _showCreatePostSheet(context),
               backgroundColor: const Color(0xFF4535C1),
               shape: const CircleBorder(),
               child: const Icon(Icons.add, color: Colors.white),
@@ -170,7 +213,7 @@ class _FeedScreenBody extends ConsumerWidget {
                 if (i == 0) {
                   return isMobile
                       ? GestureDetector(
-                          onTap: () => _showCreatePostSheet(context, ref),
+                          onTap: () => _showCreatePostSheet(context),
                           child: const MobileCreatePostTrigger(),
                         )
                       : const CreatePostCard();
@@ -212,16 +255,39 @@ class _FeedScreenBody extends ConsumerWidget {
               onRefresh: () =>
                   ref.read(optimisticFeedProvider.notifier).refresh(),
               child: ListView.builder(
-                itemCount: posts.length + 1,
+                controller: _scrollController,
+                itemCount: posts.length + 2, // +1 create card, +1 footer
                 padding: const EdgeInsets.only(bottom: 24),
                 itemBuilder: (context, index) {
                   if (index == 0) {
                     return isMobile
                         ? GestureDetector(
-                            onTap: () => _showCreatePostSheet(context, ref),
+                            onTap: () => _showCreatePostSheet(context),
                             child: const MobileCreatePostTrigger(),
                           )
                         : const CreatePostCard();
+                  }
+                  if (index == posts.length + 1) {
+                    // Footer: spinner while loading more, end-of-feed otherwise
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Center(
+                        child: _isLoadingMore
+                            ? const CircularProgressIndicator(
+                                color: Color(0xFF4535C1),
+                                strokeWidth: 2,
+                              )
+                            : ref.read(optimisticFeedProvider.notifier).hasMore
+                                ? const SizedBox.shrink()
+                                : Text(
+                                    'You\'re all caught up',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      color: const Color(0xFF787878),
+                                    ),
+                                  ),
+                      ),
+                    );
                   }
                   final entity = posts[index - 1];
                   return PostCard(post: entity.toLegacy());

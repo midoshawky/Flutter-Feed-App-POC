@@ -2,6 +2,8 @@ class Comment {
   final String id;
   final String userId;
   final String userName;
+  final String userUsername;
+  final String userAvatarUrl;
   final String text;
   final DateTime timestamp;
   final List<Comment> replies;
@@ -11,6 +13,8 @@ class Comment {
     String? id,
     required this.userId,
     required this.userName,
+    this.userUsername = '',
+    this.userAvatarUrl = '',
     required this.text,
     required this.timestamp,
     this.replies = const [],
@@ -25,6 +29,8 @@ class Comment {
       id: id,
       userId: userId,
       userName: userName,
+      userUsername: userUsername,
+      userAvatarUrl: userAvatarUrl,
       text: text,
       timestamp: timestamp,
       replies: replies ?? this.replies,

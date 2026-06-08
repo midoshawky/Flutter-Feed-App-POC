@@ -2,9 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/post_entity.dart';
 import 'di_providers.dart';
 
-// ── Feed Stream ───────────────────────────────────────────────────────────────
-final feedStreamProvider = StreamProvider<List<PostEntity>>((ref) {
-  return ref.watch(getFeedUseCaseProvider).call();
+// ── Feed (page 1 only — pagination is managed by OptimisticFeedNotifier) ──────
+final feedStreamProvider = FutureProvider<List<PostEntity>>((ref) {
+  return ref.watch(getFeedUseCaseProvider).call(page: 1, limit: 10);
 });
 
 // ── Like action (optimistic update) ──────────────────────────────────────────

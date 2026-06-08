@@ -1,6 +1,14 @@
 import '../entities/comment_entity.dart';
 import '../repositories/post_repository.dart';
 
+class GetPostCommentsUseCase {
+  final PostRepository repository;
+  GetPostCommentsUseCase(this.repository);
+
+  Future<List<CommentEntity>> call(String postId) =>
+      repository.getPostComments(postId);
+}
+
 class AddCommentUseCase {
   final PostRepository repository;
   AddCommentUseCase(this.repository);

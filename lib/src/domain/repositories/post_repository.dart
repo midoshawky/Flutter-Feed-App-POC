@@ -3,8 +3,9 @@ import '../entities/post_entity.dart';
 import '../entities/comment_entity.dart';
 
 abstract class PostRepository {
-  /// Real-time stream of the feed (newest first, paginated to [limit])
-  Stream<List<PostEntity>> getFeed({int limit = 20});
+  Future<List<PostEntity>> getFeed({int page = 1, int limit = 10});
+
+  Future<List<CommentEntity>> getPostComments(String postId);
 
   Future<void> createPost({
     required String userId,
@@ -31,7 +32,7 @@ abstract class PostRepository {
     required CommentEntity reply,
   });
 
-  Future<void> updatePost(String postId, String content);
+  Future<void> updatePost(String postId, String content, {String? type});
 
   Future<void> deletePost(String postId);
 
