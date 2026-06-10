@@ -57,7 +57,7 @@ class _CommentInputState extends ConsumerState<CommentInput> {
     final userId = ref.read(currentUserIdProvider);
     final userName = ref.read(currentUserNameProvider);
     final comment = CommentEntity(
-      id: '',
+      id: 'pending-${DateTime.now().millisecondsSinceEpoch}',
       userId: userId,
       userName: userName,
       userUsername: ref.read(currentUserUsernameProvider),

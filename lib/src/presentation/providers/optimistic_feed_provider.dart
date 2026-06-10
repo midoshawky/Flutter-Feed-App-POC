@@ -28,6 +28,9 @@ class OptimisticFeedNotifier
   bool isLoadingCommentsForPost(String postId) =>
       _loadingCommentPostIds.contains(postId);
 
+  bool isLoadedCommentsForPost(String postId) =>
+      _loadedCommentPostIds.contains(postId);
+
   Future<void> _loadPage(int page) async {
     try {
       final posts = await ref
@@ -53,12 +56,12 @@ class OptimisticFeedNotifier
   /// Lazy-load comments for a single post — fetches only once per session.
   Future<void> loadCommentsForPost(String postId) async {
     if (_loadedCommentPostIds.contains(postId)) return;
-    _loadedCommentPostIds.add(postId);
     _loadingCommentPostIds.add(postId);
     try {
       final comments =
           await ref.read(getPostCommentsUseCaseProvider).call(postId);
       _loadingCommentPostIds.remove(postId);
+      _loadedCommentPostIds.add(postId); // mark loaded only after success
       final posts = state.value;
       if (posts == null) return;
       state = AsyncValue.data([
@@ -67,7 +70,7 @@ class OptimisticFeedNotifier
       ]);
     } catch (_) {
       _loadingCommentPostIds.remove(postId);
-      _loadedCommentPostIds.remove(postId); // allow retry on next open
+      // not added to _loadedCommentPostIds — allows retry on next open
     }
   }
 
@@ -82,11 +85,13 @@ class OptimisticFeedNotifier
     final oldState = state;
     final currentPosts = state.value ?? [];
 
-    final resolvedType = mediaBytes.length == 1
-        ? PostTypeEntity.image
-        : mediaBytes.length > 1
-            ? PostTypeEntity.multiImage
-            : type;
+    final resolvedType = type == PostTypeEntity.video
+        ? PostTypeEntity.video
+        : mediaBytes.length == 1
+            ? PostTypeEntity.image
+            : mediaBytes.length > 1
+                ? PostTypeEntity.multiImage
+                : type;
 
     final optimisticPost = PostEntity(
       id: 'pending-${DateTime.now().millisecondsSinceEpoch}',
@@ -160,7 +165,31 @@ class OptimisticFeedNotifier
     ]);
 
     try {
-      await ref.read(addCommentUseCaseProvider).call(postId, comment);
+      final serverComment = await ref.read(addCommentUseCaseProvider).call(postId, comment);
+      // Preserve local user data when the API response omits the user object
+      final resolved = serverComment.userName.isEmpty
+          ? serverComment.copyWith(
+              userName: comment.userName,
+              userUsername: comment.userUsername,
+              userAvatarUrl: comment.userAvatarUrl,
+            )
+          : serverComment;
+      // Use fresh state to avoid losing comments that arrived while awaiting
+      final latestPosts = state.value ?? currentPosts;
+      state = AsyncValue.data([
+        for (final post in latestPosts)
+          if (post.id == postId)
+            post.copyWith(
+              comments: [
+                for (final c in post.comments)
+                  if (c.id == comment.id) resolved else c,
+                // If optimistic comment was already removed (edge case), append
+                if (!post.comments.any((c) => c.id == comment.id)) resolved,
+              ],
+            )
+          else
+            post,
+      ]);
     } catch (e) {
       state = oldState;
       rethrow;
@@ -186,11 +215,29 @@ class OptimisticFeedNotifier
     ]);
 
     try {
-      await ref.read(addReplyUseCaseProvider).call(
+      final serverReply = await ref.read(addReplyUseCaseProvider).call(
             postId: postId,
             parentCommentId: parentCommentId,
             reply: reply,
           );
+      // Preserve local user data when the API response omits the user object
+      final resolved = serverReply.userName.isEmpty
+          ? serverReply.copyWith(
+              userName: reply.userName,
+              userUsername: reply.userUsername,
+              userAvatarUrl: reply.userAvatarUrl,
+            )
+          : serverReply;
+      final latestPosts = state.value ?? currentPosts;
+      state = AsyncValue.data([
+        for (final post in latestPosts)
+          if (post.id == postId)
+            post.copyWith(
+              comments: _replaceReplyInComments(post.comments, reply.id, resolved),
+            )
+          else
+            post,
+      ]);
     } catch (e) {
       state = oldState;
       rethrow;
@@ -209,6 +256,21 @@ class OptimisticFeedNotifier
         else
           c.copyWith(
               replies: _addReplyToComments(c.replies, parentId, reply)),
+    ];
+  }
+
+  List<CommentEntity> _replaceReplyInComments(
+    List<CommentEntity> comments,
+    String targetId,
+    CommentEntity replacement,
+  ) {
+    return [
+      for (final c in comments)
+        if (c.id == targetId)
+          replacement
+        else
+          c.copyWith(
+              replies: _replaceReplyInComments(c.replies, targetId, replacement)),
     ];
   }
 

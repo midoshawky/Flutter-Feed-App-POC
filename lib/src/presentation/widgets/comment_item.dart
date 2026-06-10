@@ -6,6 +6,7 @@ import '../../domain/entities/comment_entity.dart';
 import '../providers/di_providers.dart';
 import '../providers/optimistic_feed_provider.dart';
 import '../../utils/responsive_layout.dart';
+import 'report_dialog.dart';
 import 'user_avatar.dart';
 
 class CommentItem extends ConsumerStatefulWidget {
@@ -89,7 +90,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
     if (text.isEmpty) return;
 
     final reply = CommentEntity(
-      id: '',
+      id: 'pending-${DateTime.now().millisecondsSinceEpoch}',
       userId: ref.read(currentUserIdProvider),
       userName: ref.read(currentUserNameProvider),
       userUsername: ref.read(currentUserUsernameProvider),
@@ -128,6 +129,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
     final currentUserId = ref.read(currentUserIdProvider);
     final isCommentOwner = widget.comment.userId == currentUserId;
     final isPostOwner = widget.postOwnerId == currentUserId;
+    final isPending = widget.comment.id.startsWith('pending-');
 
     final isHighlighted = widget.replyingToId == widget.comment.id;
 
@@ -205,10 +207,17 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                                 _editController.text = widget.comment.text;
                               });
                               Future.microtask(() => _editFocus.requestFocus());
+                            } else if (value == 'report') {
+                              showReportSheet(
+                                context,
+                                ref,
+                                targetId: widget.comment.id,
+                                type: ReportType.comment,
+                              );
                             }
                           },
                           itemBuilder: (context) => [
-                            if (isCommentOwner) ...[
+                            if (isCommentOwner && !isPending) ...[
                               PopupMenuItem(
                                 value: 'edit',
                                 child: Row(
@@ -374,7 +383,8 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                         ),
                       ),
                     const SizedBox(height: 6),
-                    // Reply tap
+                    // Reply / view-replies row — hidden while editing
+                    if (!_isEditing)
                     Row(
                       children: [
                         GestureDetector(

@@ -24,16 +24,21 @@ class CommentEntity {
   });
 
   CommentEntity copyWith({
+    String? id,
+    String? userId,
+    String? userName,
+    String? userUsername,
+    String? userAvatarUrl,
     String? text,
     List<CommentEntity>? replies,
     int? likesCount,
   }) {
     return CommentEntity(
-      id: id,
-      userId: userId,
-      userName: userName,
-      userUsername: userUsername,
-      userAvatarUrl: userAvatarUrl,
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      userName: userName ?? this.userName,
+      userUsername: userUsername ?? this.userUsername,
+      userAvatarUrl: userAvatarUrl ?? this.userAvatarUrl,
       text: text ?? this.text,
       timestamp: timestamp,
       replies: replies ?? this.replies,

@@ -11,6 +11,7 @@ import '../../domain/entities/post_entity.dart';
 import '../providers/di_providers.dart';
 import '../providers/optimistic_feed_provider.dart';
 import '../../services/mock_data_service.dart';
+import 'feed_snackbar.dart';
 import 'user_avatar.dart';
 
 class CreatePostCard extends ConsumerStatefulWidget {
@@ -33,6 +34,9 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
   // Newly picked images as bytes (works on all platforms including web)
   final List<Uint8List> _attachedMedia = [];
 
+  // A single picked video file (mutually exclusive with images)
+  XFile? _attachedVideo;
+
   // Dummy tags
   final List<String> _tags = [
     'flutter',
@@ -53,7 +57,11 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
     if (widget.postToEdit != null) {
       _controller.text = widget.postToEdit!.content;
       _isHasInput = widget.postToEdit!.content.isNotEmpty;
-      _existingMediaUrls.addAll(widget.postToEdit!.mediaUrls);
+      if (widget.postToEdit!.mediaUrls.isNotEmpty) {
+        _existingMediaUrls.addAll(widget.postToEdit!.mediaUrls);
+      } else if (widget.postToEdit!.imageUrl != null) {
+        _existingMediaUrls.add(widget.postToEdit!.imageUrl!);
+      }
     }
     _controller.addListener(() {
       setState(() {
@@ -76,13 +84,28 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
     setState(() => _attachedMedia.removeAt(index));
   }
 
+  void _removeVideo() {
+    setState(() => _attachedVideo = null);
+  }
+
   Future<void> _pickImages() async {
     final picked = await _picker.pickMultiImage(imageQuality: 85);
     if (picked.isNotEmpty) {
       // Read bytes upfront — works on web, iOS, Android, desktop
       final bytes = await Future.wait(picked.map((f) => f.readAsBytes()));
       setState(() {
+        _attachedVideo = null; // images and video are mutually exclusive
         _attachedMedia.addAll(bytes);
+      });
+    }
+  }
+
+  Future<void> _pickVideo() async {
+    final picked = await _picker.pickVideo(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() {
+        _attachedMedia.clear(); // images and video are mutually exclusive
+        _attachedVideo = picked;
       });
     }
   }
@@ -105,6 +128,7 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
   }
 
   PostTypeEntity _resolveType() {
+    if (_attachedVideo != null) return PostTypeEntity.video;
     final totalMedia = _existingMediaUrls.length + _attachedMedia.length;
     if (totalMedia == 0) return PostTypeEntity.text;
     if (totalMedia == 1) return PostTypeEntity.image;
@@ -114,7 +138,7 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
   Future<void> _handlePost() async {
     final text = _controller.text.trim();
     final totalMedia = _existingMediaUrls.length + _attachedMedia.length;
-    if (text.isEmpty && totalMedia == 0) return;
+    if (text.isEmpty && totalMedia == 0 && _attachedVideo == null) return;
 
     setState(() => _isLoading = true);
 
@@ -129,6 +153,11 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
             .updatePost(widget.postToEdit!.id, text,
                 type: PostDto.typeToString(type));
       } else {
+        List<Uint8List> allBytes = List.from(_attachedMedia);
+        if (_attachedVideo != null) {
+          final videoBytes = await _attachedVideo!.readAsBytes();
+          allBytes = [videoBytes];
+        }
         await ref
             .read(optimisticFeedProvider.notifier)
             .createPost(
@@ -136,23 +165,21 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
               content: text,
               type: type,
               tags: tags,
-              mediaBytes: List.from(_attachedMedia),
+              mediaBytes: allBytes,
             );
       }
 
       // Success: Reset state
       _controller.clear();
       _attachedMedia.clear();
+      _attachedVideo = null;
       if (mounted) {
         if (Navigator.canPop(context)) {
           Navigator.pop(context);
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              widget.postToEdit != null ? 'Post updated!' : 'Post shared!',
-            ),
-          ),
+        showFeedSnackBar(
+          context,
+          widget.postToEdit != null ? 'Post updated!' : 'Post shared!',
         );
       }
     } catch (e) {
@@ -338,6 +365,46 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
             ),
           ],
 
+          // ── Video preview ─────────────────────────────────────────────────
+          if (_attachedVideo != null) ...[
+            const SizedBox(height: 16),
+            Stack(
+              children: [
+                Container(
+                  width: 168,
+                  height: 168,
+                  decoration: BoxDecoration(
+                    color: Colors.black87,
+                    borderRadius: BorderRadius.circular(8.96),
+                    border: Border.all(color: const Color(0xFFDEDEDE), width: 0.76),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8.96),
+                    child: const Center(
+                      child: Icon(Icons.videocam, color: Colors.white, size: 48),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: GestureDetector(
+                    onTap: _isLoading ? null : _removeVideo,
+                    child: Container(
+                      width: 24,
+                      height: 24,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF343434),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.close, size: 14, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+
           // ── Media attachment previews ─────────────────────────────────────
           if (_existingMediaUrls.isNotEmpty || _attachedMedia.isNotEmpty) ...[
             const SizedBox(height: 16),
@@ -420,38 +487,44 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
           const SizedBox(height: 16),
           Row(
             children: [
-              Tooltip(
-                message: "Add an image or video",
-                preferBelow: false,
-                verticalOffset: 20,
-                padding: EdgeInsets.all(12),
-                textStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  fontStyle: FontStyle.normal,
-                  height: 1.42,
-                  letterSpacing: 0,
-                  color: Color(0xFF343434),
+              PopupMenuButton<String>(
+                tooltip: 'Add photo or video',
+                enabled: !_isLoading,
+                position: PopupMenuPosition.over,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+                onSelected: (value) {
+                  if (value == 'photo') _pickImages();
+                  if (value == 'video') _pickVideo();
+                },
+                itemBuilder: (_) => [
+                  PopupMenuItem<String>(
+                    value: 'photo',
+                    child: Row(
+                      children: const [
+                        Icon(Icons.image_outlined, color: Color(0xFF787878), size: 20),
+                        SizedBox(width: 8),
+                        Text('Photo', style: TextStyle(fontSize: 14, color: Color(0xFF1F1F1F))),
+                      ],
                     ),
-                  ],
-                ),
-                child: IconButton(
-                  onPressed: _isLoading ? null : _pickImages,
-                  icon: SvgPicture.asset(
-                    'assets/icons/image.svg',
-                    package: 'feed_module',
                   ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
+                  PopupMenuItem<String>(
+                    value: 'video',
+                    child: Row(
+                      children: const [
+                        Icon(Icons.videocam_outlined, color: Color(0xFF787878), size: 20),
+                        SizedBox(width: 8),
+                        Text('Video', style: TextStyle(fontSize: 14, color: Color(0xFF1F1F1F))),
+                      ],
+                    ),
+                  ),
+                ],
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                child: SvgPicture.asset(
+                  'assets/icons/image.svg',
+                  package: 'feed_module',
                 ),
               ),
               const Spacer(),

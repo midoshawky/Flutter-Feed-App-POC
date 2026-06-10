@@ -23,9 +23,9 @@ class CommentSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isMobile = ResponsiveLayout.isMobile(context);
-    final isLoading = ref
-        .watch(optimisticFeedProvider.notifier)
-        .isLoadingCommentsForPost(post.id);
+    final notifier = ref.watch(optimisticFeedProvider.notifier);
+    final isLoading = notifier.isLoadingCommentsForPost(post.id);
+    final isLoaded = notifier.isLoadedCommentsForPost(post.id);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,6 +39,8 @@ class CommentSection extends ConsumerWidget {
           const _CommentItemSkeleton(),
           const _CommentItemSkeleton(),
           const _CommentItemSkeleton(),
+        ] else if (!isLoaded) ...[
+          // Not yet loaded — render nothing to avoid premature empty state
         ] else ...[
           if (post.comments.isNotEmpty) const SizedBox(height: 8),
           ...post.comments.map((comment) => CommentItem(

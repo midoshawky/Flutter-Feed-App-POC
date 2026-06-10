@@ -54,6 +54,10 @@ class _PostCardState extends ConsumerState<PostCard> {
                       ? matched.first.toLegacy()
                       : widget.post;
 
+                      final isCommentsLoading = ref
+        .watch(optimisticFeedProvider.notifier)
+        .isLoadingCommentsForPost(widget.post.id);
+
                   return Column(
                     children: [
                       const SizedBox(height: 12),
@@ -87,7 +91,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                           ],
                         ),
                       ),
-                      if (currentPost.comments.isEmpty)
+                      if (currentPost.comments.isEmpty && !isCommentsLoading)
                         Expanded(
                           child: Center(
                             child: Column(

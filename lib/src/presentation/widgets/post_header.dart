@@ -7,6 +7,8 @@ import '../../models/post.dart';
 import '../providers/di_providers.dart';
 import '../providers/optimistic_feed_provider.dart';
 import '../../utils/responsive_layout.dart';
+import 'feed_snackbar.dart';
+import 'report_dialog.dart';
 import 'user_avatar.dart';
 import 'create_post_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -93,12 +95,9 @@ class PostHeader extends ConsumerWidget {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        final messenger = ScaffoldMessenger.of(context);
                         ref.read(optimisticFeedProvider.notifier).deletePost(post.id);
                         Navigator.pop(context);
-                        messenger.showSnackBar(
-                          const SnackBar(content: Text('Post deleted')),
-                        );
+                        showFeedSnackBar(context, 'Post deleted');
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFF44336),
@@ -229,9 +228,17 @@ class PostHeader extends ConsumerWidget {
                   child: Container(
                     width: 20,
                     height: 20,
+                    
                     decoration: BoxDecoration(
                       color: isFollowing ? Colors.grey : const Color(0xFF4535C1),
                       shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Icon(
                       isFollowing ? Icons.check : Icons.add,
@@ -251,14 +258,15 @@ class PostHeader extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  Text(
+                 Flexible(child: Text(
                     user.name,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
                       color: Color(0xFF333333),
                     ),
-                  ),
+                  ),),
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
@@ -325,13 +333,19 @@ class PostHeader extends ConsumerWidget {
                     _showEditSheet(context, ref);
                     break;
                   case 'copy':
-                    Clipboard.setData(ClipboardData(text: 'https://app.example/posts/${post.id}'));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Link copied to clipboard')),
-                    );
+                    Clipboard.setData(ClipboardData(text: 'https://dev-front-shuwier.pomac.info/timeline?postId=${post.id}'));
+                    showFeedSnackBar(context, 'Link copied to clipboard');
                     break;
                   case 'delete':
                     _showDeleteDialog(context, ref);
+                    break;
+                  case 'report':
+                    showReportSheet(
+                      context,
+                      ref,
+                      targetId: post.id,
+                      type: ReportType.post,
+                    );
                     break;
                 }
               },

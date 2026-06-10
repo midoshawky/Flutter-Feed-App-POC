@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/post.dart';
 import 'image_slider_preview.dart';
+import 'video_player_widget.dart';
 
 class PostMedia extends StatelessWidget {
   final Post post;
@@ -21,41 +22,26 @@ class PostMedia extends StatelessWidget {
     String url, {
     bool isVideo = false,
   }) {
+    if (isVideo) {
+      return VideoPlayerWidget(url: url);
+    }
     return GestureDetector(
-      onTap: isVideo ? null : () => _openSlider(context, [url], 0),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.network(
-              url,
-              fit: BoxFit.cover,
-              webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
-              height: 320,
-              width: double.infinity,
-              errorBuilder: (_, __, ___) => Container(
-                height: 320,
-                width: double.infinity,
-                color: Colors.grey[300],
-                child: const Icon(Icons.error, color: Colors.grey),
-              ),
-            ),
+      onTap: () => _openSlider(context, [url], 0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Image.network(
+          url,
+          fit: BoxFit.cover,
+          webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
+          height: 320,
+          width: double.infinity,
+          errorBuilder: (_, __, ___) => Container(
+            height: 320,
+            width: double.infinity,
+            color: Colors.grey[300],
+            child: const Icon(Icons.error, color: Colors.grey),
           ),
-          if (isVideo)
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.5),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.play_arrow,
-                color: Colors.white,
-                size: 36,
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }

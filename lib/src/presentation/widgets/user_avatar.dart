@@ -12,7 +12,7 @@ class UserAvatar extends StatelessWidget {
     if (n.isEmpty) return '';
     final parts = n.split(RegExp(r'\s+'));
     if (parts.length == 1) return parts[0][0].toUpperCase();
-    return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    return '${parts[0][0]}'.toUpperCase();
   }
 
   Color _avatarColor() {
@@ -34,7 +34,7 @@ class UserAvatar extends StatelessWidget {
     return Container(
       width: radius * 2,
       height: radius * 2,
-      color: initials.isEmpty ? Colors.grey[200] : _avatarColor(),
+      color: initials.isEmpty ? Colors.grey[200] : Color(0xFF4833c7),
       child: initials.isEmpty
           ? Icon(Icons.person, color: Colors.grey, size: radius)
           : Center(

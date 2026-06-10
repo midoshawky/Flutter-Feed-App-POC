@@ -13,18 +13,36 @@ class PostRepositoryImpl implements PostRepository {
   @override
   Future<List<PostEntity>> getFeed({int page = 1, int limit = 10}) async {
     final dtos = await _datasource.getFeedPosts(page: page, limit: limit);
-    return Future.wait(dtos.map((dto) async {
+
+    // Collect IDs of reposted originals that weren't inlined by the API
+    final missingIds = dtos
+        .where((d) => d.repostedFromDto == null && d.repostedFromId != null)
+        .map((d) => d.repostedFromId!)
+        .toSet()
+        .toList();
+
+    // Batch-fetch all missing originals in parallel (one round-trip per unique ID)
+    final fetched = await Future.wait(
+      missingIds.map((id) async {
+        try {
+          return await _datasource.getPostById(id);
+        } catch (_) {
+          return null;
+        }
+      }),
+    );
+    final repostCache = Map.fromIterables(missingIds, fetched);
+
+    return dtos.map((dto) {
       PostEntity? repostedFrom;
       if (dto.repostedFromDto != null) {
         repostedFrom = dto.repostedFromDto!.toEntity();
       } else if (dto.repostedFromId != null) {
-        try {
-          final origDto = await _datasource.getPostById(dto.repostedFromId!);
-          if (origDto != null) repostedFrom = origDto.toEntity();
-        } catch (_) {}
+        final orig = repostCache[dto.repostedFromId!];
+        if (orig != null) repostedFrom = orig.toEntity();
       }
       return dto.toEntity(repostedFrom: repostedFrom);
-    }));
+    }).toList();
   }
 
   @override
@@ -41,19 +59,26 @@ class PostRepositoryImpl implements PostRepository {
     required List<String> tags,
     List<Uint8List> mediaBytes = const [],
   }) async {
+    final isVideo = type == PostTypeEntity.video;
+
     // 1. Upload all media files in parallel to get their IDs
     final List<String> mediaIds = await Future.wait(
-      mediaBytes.asMap().entries.map((entry) => 
-        _datasource.uploadMedia(entry.value, 'media_${entry.key}.jpg')
-      ),
+      mediaBytes.asMap().entries.map((entry) {
+        final filename = isVideo
+            ? 'media_${entry.key}.mp4'
+            : 'media_${entry.key}.jpg';
+        return _datasource.uploadMedia(entry.value, filename);
+      }),
     );
 
-    // 2. Resolve post type based on media presence if it was not explicitly set correctly
-    final resolvedType = mediaIds.isEmpty
-        ? PostTypeEntity.text
-        : mediaIds.length == 1
-            ? PostTypeEntity.image
-            : PostTypeEntity.multiImage;
+    // 2. Resolve post type based on media presence, preserving video type
+    final resolvedType = isVideo
+        ? PostTypeEntity.video
+        : mediaIds.isEmpty
+            ? PostTypeEntity.text
+            : mediaIds.length == 1
+                ? PostTypeEntity.image
+                : PostTypeEntity.multiImage;
 
     // 3. Create the post using the collected media IDs
     await _datasource.createPost(
@@ -80,18 +105,20 @@ class PostRepositoryImpl implements PostRepository {
   }
 
   @override
-  Future<void> addComment(String postId, CommentEntity comment) async {
-    await _datasource.addComment(postId, text: comment.text);
+  Future<CommentEntity> addComment(String postId, CommentEntity comment) async {
+    final commentDto = await _datasource.addComment(postId, text: comment.text);
+    return commentDto.toEntity();
   }
 
   @override
-  Future<void> addReply({
+  Future<CommentEntity> addReply({
     required String postId,
     required String parentCommentId,
     required CommentEntity reply,
   }) async {
-    await _datasource.addComment(postId,
+   final commentDto = await _datasource.addComment(postId,
         text: reply.text, parentId: parentCommentId);
+    return commentDto.toEntity();
   }
 
   @override
@@ -113,5 +140,10 @@ class PostRepositoryImpl implements PostRepository {
   @override
   Future<void> updateComment(String commentId, String text) async {
     await _datasource.updateComment(commentId, text);
+  }
+
+  @override
+  Future<void> report(String targetId, String type, String reason) async {
+    await _datasource.report(targetId, type, reason);
   }
 }

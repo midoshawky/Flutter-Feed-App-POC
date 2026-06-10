@@ -1,4 +1,6 @@
 import 'dart:typed_data';
+import 'package:feed_module/feed_module.dart';
+
 import '../entities/post_entity.dart';
 import '../entities/comment_entity.dart';
 
@@ -24,9 +26,9 @@ abstract class PostRepository {
     required PostEntity originalPost,
   });
 
-  Future<void> addComment(String postId, CommentEntity comment);
+  Future<CommentEntity> addComment(String postId, CommentEntity comment);
 
-  Future<void> addReply({
+  Future<CommentEntity> addReply({
     required String postId,
     required String parentCommentId,
     required CommentEntity reply,
@@ -39,4 +41,6 @@ abstract class PostRepository {
   Future<void> deleteComment(String commentId);
 
   Future<void> updateComment(String commentId, String text);
+
+  Future<void> report(String targetId, String type, String reason);
 }

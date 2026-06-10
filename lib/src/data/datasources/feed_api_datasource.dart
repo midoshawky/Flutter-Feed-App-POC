@@ -111,18 +111,19 @@ class FeedApiDataSource {
         .toList();
   }
 
-  Future<void> addComment(
+  Future<CommentDto> addComment(
     String postId, {
     required String text,
     String? parentId,
   }) async {
-    await _client.dio.post(
+    final response = await _client.dio.post(
       '/api/posts/$postId/comments',
       data: {
         'text': text,
         if (parentId != null) 'parent_id': int.tryParse(parentId) ?? parentId,
       },
     );
+    return CommentDto.fromJson(response.data['data'] as Map<String, dynamic>);
   }
 
   Future<void> deleteComment(String commentId) async {
@@ -131,6 +132,10 @@ class FeedApiDataSource {
 
   Future<void> updateComment(String commentId, String text) async {
     await _client.dio.post('/api/comments/$commentId', data: {'text': text});
+  }
+
+  Future<void> report(String targetId, String type, String reason) async {
+    await _client.dio.post('/api/reports/$targetId', data: {'type': type, 'reason': reason});
   }
 
   // ── Follows ──────────────────────────────────────────────────────────────────
