@@ -487,9 +487,33 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
           const SizedBox(height: 16),
           Row(
             children: [
+              Tooltip(
+                message: "Add an image or video",
+                preferBelow: false,
+                verticalOffset: 20,
+                padding: EdgeInsets.all(12),
+                textStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  fontStyle: FontStyle.normal,
+                  height: 1.42,
+                  letterSpacing: 0,
+                  color: Color(0xFF343434),
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),child:
               PopupMenuButton<String>(
-                tooltip: 'Add photo or video',
                 enabled: !_isLoading,
+                tooltip: "",
                 position: PopupMenuPosition.over,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -526,7 +550,7 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
                   'assets/icons/image.svg',
                   package: 'feed_module',
                 ),
-              ),
+              )),
               const Spacer(),
               ElevatedButton(
                 onPressed: _isLoading ||
