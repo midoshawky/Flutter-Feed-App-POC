@@ -28,8 +28,9 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
 
-  // Existing media URLs loaded from the post being edited
+  // Existing media URLs/IDs loaded from the post being edited (kept in sync by index)
   final List<String> _existingMediaUrls = [];
+  final List<String> _existingMediaIds = [];
 
   // Newly picked images as bytes (works on all platforms including web)
   final List<Uint8List> _attachedMedia = [];
@@ -59,8 +60,12 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
       _isHasInput = widget.postToEdit!.content.isNotEmpty;
       if (widget.postToEdit!.mediaUrls.isNotEmpty) {
         _existingMediaUrls.addAll(widget.postToEdit!.mediaUrls);
+        _existingMediaIds.addAll(widget.postToEdit!.mediaIds);
       } else if (widget.postToEdit!.imageUrl != null) {
         _existingMediaUrls.add(widget.postToEdit!.imageUrl!);
+        if (widget.postToEdit!.mediaIds.isNotEmpty) {
+          _existingMediaIds.add(widget.postToEdit!.mediaIds.first);
+        }
       }
     }
     _controller.addListener(() {
@@ -77,7 +82,10 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
   }
 
   void _removeExistingMedia(int index) {
-    setState(() => _existingMediaUrls.removeAt(index));
+    setState(() {
+      _existingMediaUrls.removeAt(index);
+      if (index < _existingMediaIds.length) _existingMediaIds.removeAt(index);
+    });
   }
 
   void _removeMedia(int index) {
@@ -147,17 +155,23 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
       final userId = ref.read(currentUserIdProvider);
       final type = _resolveType();
 
+      List<Uint8List> allBytes = List.from(_attachedMedia);
+      if (_attachedVideo != null) {
+        final videoBytes = await _attachedVideo!.readAsBytes();
+        allBytes = [videoBytes];
+      }
+
       if (widget.postToEdit != null) {
         await ref
             .read(optimisticFeedProvider.notifier)
-            .updatePost(widget.postToEdit!.id, text,
-                type: PostDto.typeToString(type));
+            .updatePost(
+              widget.postToEdit!.id,
+              text,
+              type: PostDto.typeToString(type),
+              existingMediaIds: _existingMediaIds,
+              newMediaBytes: allBytes,
+            );
       } else {
-        List<Uint8List> allBytes = List.from(_attachedMedia);
-        if (_attachedVideo != null) {
-          final videoBytes = await _attachedVideo!.readAsBytes();
-          allBytes = [videoBytes];
-        }
         await ref
             .read(optimisticFeedProvider.notifier)
             .createPost(
@@ -556,7 +570,8 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
                 onPressed: _isLoading ||
                       (!_isHasInput &&
                           _existingMediaUrls.isEmpty &&
-                          _attachedMedia.isEmpty)
+                          _attachedMedia.isEmpty &&
+                          _attachedVideo == null)
                   ? null
                   : _handlePost,
                 style: ElevatedButton.styleFrom(

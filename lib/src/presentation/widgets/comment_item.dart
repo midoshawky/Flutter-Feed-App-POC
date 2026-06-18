@@ -6,6 +6,7 @@ import '../../domain/entities/comment_entity.dart';
 import '../providers/di_providers.dart';
 import '../providers/optimistic_feed_provider.dart';
 import '../../utils/responsive_layout.dart';
+import 'feed_snackbar.dart';
 import 'report_dialog.dart';
 import 'user_avatar.dart';
 
@@ -201,6 +202,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                                     widget.postId,
                                     widget.comment.id,
                                   );
+                              showFeedSnackBar(context, 'Comment deleted');
                             } else if (value == 'edit') {
                               setState(() {
                                 _isEditing = true;
@@ -387,32 +389,35 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                     if (!_isEditing)
                     Row(
                       children: [
-                        GestureDetector(
-                          onTap: () {
-                            if (ResponsiveLayout.isMobile(context)) {
-                              if (widget.onReplyTap != null) {
-                                widget.onReplyTap!(
-                                  widget.comment,
-                                  widget.parentCommentId,
-                                );
+                        MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap: () {
+                              if (ResponsiveLayout.isMobile(context)) {
+                                if (widget.onReplyTap != null) {
+                                  widget.onReplyTap!(
+                                    widget.comment,
+                                    widget.parentCommentId,
+                                  );
+                                }
+                              } else {
+                                setState(() {
+                                  _showReplyInput = !_showReplyInput;
+                                });
+                                if (_showReplyInput) {
+                                  Future.microtask(
+                                    () => _replyFocus.requestFocus(),
+                                  );
+                                }
                               }
-                            } else {
-                              setState(() {
-                                _showReplyInput = !_showReplyInput;
-                              });
-                              if (_showReplyInput) {
-                                Future.microtask(
-                                  () => _replyFocus.requestFocus(),
-                                );
-                              }
-                            }
-                          },
-                          child: Text(
-                            'Reply',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF4535C1),
+                            },
+                            child: Text(
+                              'Reply',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF4535C1),
+                              ),
                             ),
                           ),
                         ),

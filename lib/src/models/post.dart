@@ -9,6 +9,7 @@ class Post {
   final String content;
   final String? imageUrl;
   final List<String> mediaUrls;
+  final List<String> mediaIds;
   final List<String> tags;
   final PostType type;
   final int likesCount;
@@ -26,6 +27,7 @@ class Post {
     required this.content,
     this.imageUrl,
     this.mediaUrls = const [],
+    this.mediaIds = const [],
     this.tags = const [],
     required this.type,
     this.likesCount = 0,
@@ -54,6 +56,7 @@ class Post {
       content: content ?? this.content,
       imageUrl: imageUrl,
       mediaUrls: mediaUrls,
+      mediaIds: mediaIds,
       tags: tags,
       type: type,
       likesCount: likesCount ?? this.likesCount,

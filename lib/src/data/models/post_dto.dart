@@ -8,6 +8,7 @@ class PostDto {
   final String content;
   final String? imageUrl;
   final List<String> mediaUrls;
+  final List<String> mediaIds;
   final List<String> tags;
   final String type;
   final int likesCount;
@@ -26,6 +27,7 @@ class PostDto {
     required this.content,
     this.imageUrl,
     this.mediaUrls = const [],
+    this.mediaIds = const [],
     this.tags = const [],
     required this.type,
     this.likesCount = 0,
@@ -46,6 +48,7 @@ class PostDto {
       content: content,
       imageUrl: imageUrl,
       mediaUrls: mediaUrls,
+      mediaIds: mediaIds,
       tags: tags,
       type: type,
       likesCount: likesCount,
@@ -71,11 +74,12 @@ class PostDto {
         timestamp: DateTime.now(),
       );
     }
-    final mediaList = (json['media'] as List? ?? []);
-    final mediaUrls = mediaList
-        .map((m) => (m as Map<String, dynamic>)['file_url'] as String? ?? '')
-        .where((url) => url.isNotEmpty)
+    final mediaList = (json['media'] as List? ?? [])
+        .cast<Map<String, dynamic>>()
+        .where((m) => (m['file_url'] as String? ?? '').isNotEmpty)
         .toList();
+    final mediaUrls = mediaList.map((m) => m['file_url'] as String).toList();
+    final mediaIds = mediaList.map((m) => m['id'].toString()).toList();
 
     final userJson = json['user'] as Map<String, dynamic>?;
     final repostedFromJson = json['reposted_from'] as Map<String, dynamic>?;
@@ -86,6 +90,7 @@ class PostDto {
       content: json['content'] as String? ?? '',
       imageUrl: mediaUrls.isNotEmpty ? mediaUrls.first : null,
       mediaUrls: mediaUrls,
+      mediaIds: mediaIds,
       tags: (json['tags'] as List? ?? [])
           .map((t) => (t as Map<String, dynamic>)['name'] as String? ?? '')
           .where((s) => s.isNotEmpty)
@@ -141,6 +146,7 @@ class PostDto {
       content: content,
       imageUrl: imageUrl,
       mediaUrls: mediaUrls,
+      mediaIds: mediaIds,
       tags: tags,
       type: _typeFromString(type),
       likesCount: likesCount,

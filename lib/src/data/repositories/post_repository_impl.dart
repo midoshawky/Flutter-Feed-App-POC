@@ -122,9 +122,32 @@ class PostRepositoryImpl implements PostRepository {
   }
 
   @override
-  Future<void> updatePost(String postId, String content,
-      {String? type}) async {
-    await _datasource.updatePost(postId, content: content, type: type);
+  Future<void> updatePost(
+    String postId,
+    String content, {
+    String? type,
+    List<String> existingMediaIds = const [],
+    List<Uint8List> newMediaBytes = const [],
+  }) async {
+    final isVideo = type == 'video';
+
+    // 1. Upload any newly attached media files in parallel to get their IDs
+    final uploadedIds = await Future.wait(
+      newMediaBytes.asMap().entries.map((entry) {
+        final filename = isVideo
+            ? 'media_${entry.key}.mp4'
+            : 'media_${entry.key}.jpg';
+        return _datasource.uploadMedia(entry.value, filename);
+      }),
+    );
+
+    // 2. Send the post update with kept existing IDs plus newly uploaded IDs
+    await _datasource.updatePost(
+      postId,
+      content: content,
+      type: type,
+      mediaIds: [...existingMediaIds, ...uploadedIds],
+    );
   }
 
   @override

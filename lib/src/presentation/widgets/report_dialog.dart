@@ -177,8 +177,7 @@ class _ReportDialogState extends State<_ReportDialog> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // Cancel
-                  SizedBox(
-                    width: 172,
+                  Expanded(child:SizedBox(
                     height: 48,
                     child: OutlinedButton(
                       onPressed:
@@ -200,11 +199,10 @@ class _ReportDialogState extends State<_ReportDialog> {
                         ),
                       ),
                     ),
-                  ),
+                  ),),
                   const SizedBox(width: 16),
                   // Submit
-                  SizedBox(
-                    width: 172,
+                  Expanded(child:SizedBox(
                     height: 48,
                     child: ElevatedButton(
                       onPressed: canSubmit ? _submit : null,
@@ -236,7 +234,7 @@ class _ReportDialogState extends State<_ReportDialog> {
                               ),
                             ),
                     ),
-                  ),
+                  ),)
                 ],
               ),
             ],

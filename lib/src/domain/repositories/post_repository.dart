@@ -34,7 +34,13 @@ abstract class PostRepository {
     required CommentEntity reply,
   });
 
-  Future<void> updatePost(String postId, String content, {String? type});
+  Future<void> updatePost(
+    String postId,
+    String content, {
+    String? type,
+    List<String> existingMediaIds,
+    List<Uint8List> newMediaBytes,
+  });
 
   Future<void> deletePost(String postId);
 

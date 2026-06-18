@@ -70,11 +70,15 @@ class FeedApiDataSource {
     String postId, {
     String? content,
     String? type,
+    List<String> mediaIds = const [],
   }) async {
     final formData = FormData();
     formData.fields.add(const MapEntry('_method', 'PUT'));
     if (content != null) formData.fields.add(MapEntry('content', content));
     if (type != null) formData.fields.add(MapEntry('type', type));
+    for (int i = 0; i < mediaIds.length; i++) {
+      formData.fields.add(MapEntry('media_ids[$i]', mediaIds[i]));
+    }
     await _client.dio.post('/api/posts/$postId', data: formData);
   }
 

@@ -11,6 +11,7 @@ class PostEntity {
   final String content;
   final String? imageUrl;
   final List<String> mediaUrls;
+  final List<String> mediaIds;
   final List<String> tags;
   final PostTypeEntity type;
   final int likesCount;
@@ -28,6 +29,7 @@ class PostEntity {
     required this.content,
     this.imageUrl,
     this.mediaUrls = const [],
+    this.mediaIds = const [],
     this.tags = const [],
     required this.type,
     this.likesCount = 0,
@@ -46,6 +48,7 @@ class PostEntity {
     String? content,
     String? imageUrl,
     List<String>? mediaUrls,
+    List<String>? mediaIds,
     List<String>? tags,
     PostTypeEntity? type,
     int? likesCount,
@@ -63,6 +66,7 @@ class PostEntity {
       content: content ?? this.content,
       imageUrl: imageUrl ?? this.imageUrl,
       mediaUrls: mediaUrls ?? this.mediaUrls,
+      mediaIds: mediaIds ?? this.mediaIds,
       tags: tags ?? this.tags,
       type: type ?? this.type,
       likesCount: likesCount ?? this.likesCount,
@@ -83,6 +87,7 @@ class PostEntity {
       content: content,
       imageUrl: imageUrl,
       mediaUrls: mediaUrls,
+      mediaIds: mediaIds,
       tags: tags,
       type: PostType.values[type.index],
       likesCount: likesCount,

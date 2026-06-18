@@ -323,8 +323,13 @@ class OptimisticFeedNotifier
   }
 
   /// Optimistically update a post
-  Future<void> updatePost(String postId, String content,
-      {String? type}) async {
+  Future<void> updatePost(
+    String postId,
+    String content, {
+    String? type,
+    List<String> existingMediaIds = const [],
+    List<Uint8List> newMediaBytes = const [],
+  }) async {
     final oldState = state;
     final currentPosts = state.value;
     if (currentPosts == null) return;
@@ -335,9 +340,15 @@ class OptimisticFeedNotifier
     ]);
 
     try {
-      await ref
-          .read(updatePostUseCaseProvider)
-          .call(postId, content, type: type);
+      await ref.read(updatePostUseCaseProvider).call(
+            postId,
+            content,
+            type: type,
+            existingMediaIds: existingMediaIds,
+            newMediaBytes: newMediaBytes,
+          );
+      _loadedCommentPostIds.clear();
+      await _loadPage(1);
     } catch (e) {
       state = oldState;
       rethrow;
