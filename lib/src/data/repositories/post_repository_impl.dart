@@ -11,17 +11,37 @@ class PostRepositoryImpl implements PostRepository {
   PostRepositoryImpl(this._datasource);
 
   @override
-  Future<List<PostEntity>> getFeed({int page = 1, int limit = 10}) async {
-    final dtos = await _datasource.getFeedPosts(page: page, limit: limit);
+  Future<List<PostEntity>> getFeed({
+    int page = 1,
+    int limit = 10,
+    String? userId,
+    String? postId,
+  }) async {
+    if (postId != null) {
+      final dto = await _datasource.getPostById(postId);
+      if (dto == null) return [];
+      final repostCache = await _fetchRepostCache([dto]);
+      return [_dtoToEntity(dto, repostCache)];
+    }
 
-    // Collect IDs of reposted originals that weren't inlined by the API
+    final dtos = await _datasource.getFeedPosts(
+      page: page,
+      limit: limit,
+      userId: userId,
+    );
+    final repostCache = await _fetchRepostCache(dtos);
+    return dtos.map((dto) => _dtoToEntity(dto, repostCache)).toList();
+  }
+
+  /// Batch-fetches reposted originals that weren't inlined by the API
+  /// (one round-trip per unique ID).
+  Future<Map<String, PostDto?>> _fetchRepostCache(List<PostDto> dtos) async {
     final missingIds = dtos
         .where((d) => d.repostedFromDto == null && d.repostedFromId != null)
         .map((d) => d.repostedFromId!)
         .toSet()
         .toList();
 
-    // Batch-fetch all missing originals in parallel (one round-trip per unique ID)
     final fetched = await Future.wait(
       missingIds.map((id) async {
         try {
@@ -31,18 +51,18 @@ class PostRepositoryImpl implements PostRepository {
         }
       }),
     );
-    final repostCache = Map.fromIterables(missingIds, fetched);
+    return Map.fromIterables(missingIds, fetched);
+  }
 
-    return dtos.map((dto) {
-      PostEntity? repostedFrom;
-      if (dto.repostedFromDto != null) {
-        repostedFrom = dto.repostedFromDto!.toEntity();
-      } else if (dto.repostedFromId != null) {
-        final orig = repostCache[dto.repostedFromId!];
-        if (orig != null) repostedFrom = orig.toEntity();
-      }
-      return dto.toEntity(repostedFrom: repostedFrom);
-    }).toList();
+  PostEntity _dtoToEntity(PostDto dto, Map<String, PostDto?> repostCache) {
+    PostEntity? repostedFrom;
+    if (dto.repostedFromDto != null) {
+      repostedFrom = dto.repostedFromDto!.toEntity();
+    } else if (dto.repostedFromId != null) {
+      final orig = repostCache[dto.repostedFromId!];
+      if (orig != null) repostedFrom = orig.toEntity();
+    }
+    return dto.toEntity(repostedFrom: repostedFrom);
   }
 
   @override

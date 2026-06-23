@@ -5,7 +5,12 @@ import '../entities/post_entity.dart';
 import '../entities/comment_entity.dart';
 
 abstract class PostRepository {
-  Future<List<PostEntity>> getFeed({int page = 1, int limit = 10});
+  Future<List<PostEntity>> getFeed({
+    int page = 1,
+    int limit = 10,
+    String? userId,
+    String? postId,
+  });
 
   Future<List<CommentEntity>> getPostComments(String postId);
 

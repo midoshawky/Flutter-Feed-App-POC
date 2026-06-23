@@ -27,6 +27,12 @@ final currentUserUsernameProvider = Provider<String>((ref) => '');
 
 final currentUserAvatarUrlProvider = Provider<String?>((ref) => null);
 
+/// When true, the feed is scoped to the current user's own posts only.
+final myFeedProvider = Provider<bool>((ref) => false);
+
+/// When set, the feed shows only this single post instead of the paginated feed.
+final postIdProvider = Provider<String?>((ref) => null);
+
 // ── Infrastructure ────────────────────────────────────────────────────────────
 final apiClientProvider = Provider<ApiClient>((ref) {
   return ApiClient(tokenProvider: () => ref.watch(authTokenProvider));

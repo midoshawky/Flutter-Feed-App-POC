@@ -13,10 +13,18 @@ class FeedApiDataSource {
 
   // ── Posts ───────────────────────────────────────────────────────────────────
 
-  Future<List<PostDto>> getFeedPosts({int page = 1, int limit = 10}) async {
+  Future<List<PostDto>> getFeedPosts({
+    int page = 1,
+    int limit = 10,
+    String? userId,
+  }) async {
     final response = await _client.dio.get(
       '/api/posts',
-      queryParameters: {'per_page': limit, 'page': page},
+      queryParameters: {
+        'per_page': limit,
+        'page': page,
+        if (userId != null) 'user_id': userId,
+      },
     );
     final List<dynamic> items = response.data['data'] as List? ?? [];
     return items.map((item) {

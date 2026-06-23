@@ -33,13 +33,16 @@ class OptimisticFeedNotifier
 
   Future<void> _loadPage(int page) async {
     try {
+      final postId = ref.read(postIdProvider);
+      final userId =
+          ref.read(myFeedProvider) ? ref.read(currentUserIdProvider) : null;
       final posts = await ref
           .read(getFeedUseCaseProvider)
-          .call(page: page, limit: 10);
+          .call(page: page, limit: 10, userId: userId, postId: postId);
       final current = page == 1 ? <PostEntity>[] : (state.value ?? []);
       state = AsyncValue.data([...current, ...posts]);
       _currentPage = page;
-      _hasMore = posts.length >= 10;
+      _hasMore = postId == null && posts.length >= 10;
     } catch (e, s) {
       if (page == 1) state = AsyncValue.error(e, s);
       // On subsequent pages, keep existing data and swallow the error

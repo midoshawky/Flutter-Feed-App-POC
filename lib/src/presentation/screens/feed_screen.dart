@@ -21,6 +21,8 @@ class FeedScreen extends StatefulWidget {
   final String currentUserName;
   final String currentUserUsername;
   final String? currentUserAvatarUrl;
+  final bool? myFeed;
+  final String? postId;
 
   const FeedScreen({
     super.key,
@@ -29,6 +31,8 @@ class FeedScreen extends StatefulWidget {
     this.currentUserName = '',
     this.currentUserUsername = '',
     this.currentUserAvatarUrl,
+    this.myFeed,
+    this.postId,
   });
 
   @override
@@ -47,6 +51,8 @@ class _FeedScreenState extends State<FeedScreen> {
     String effectiveUserName = widget.currentUserName;
     String effectiveUserUsername = widget.currentUserUsername;
     String? effectiveAvatarUrl = widget.currentUserAvatarUrl;
+    bool? effectiveMyFeed = widget.myFeed;
+    String? effectivePostId = widget.postId;
 
     if (kIsWeb) {
       final uri = Uri.base;
@@ -65,6 +71,12 @@ class _FeedScreenState extends State<FeedScreen> {
       if (uri.queryParameters.containsKey('avatar_url')) {
         effectiveAvatarUrl = uri.queryParameters['avatar_url'];
       }
+      if (uri.queryParameters.containsKey('my_feed')) {
+        effectiveMyFeed = bool.tryParse(uri.queryParameters['my_feed']??'');
+      }
+      if (uri.queryParameters.containsKey('post_id')) {
+        effectivePostId = uri.queryParameters['post_id'];
+      }
     }
 
     _container = ProviderContainer(
@@ -76,6 +88,8 @@ class _FeedScreenState extends State<FeedScreen> {
         currentUserNameProvider.overrideWithValue(effectiveUserName),
         currentUserUsernameProvider.overrideWithValue(effectiveUserUsername),
         currentUserAvatarUrlProvider.overrideWithValue(effectiveAvatarUrl),
+        myFeedProvider.overrideWithValue(effectiveMyFeed ?? false),
+        postIdProvider.overrideWithValue(effectivePostId),
       ],
     );
   }
