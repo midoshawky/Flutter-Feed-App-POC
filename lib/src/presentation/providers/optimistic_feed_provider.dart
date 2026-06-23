@@ -1,5 +1,5 @@
-import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/entities/media_attachment.dart';
 import '../../domain/entities/post_entity.dart';
 import '../../domain/entities/comment_entity.dart';
 import 'di_providers.dart';
@@ -80,18 +80,15 @@ class OptimisticFeedNotifier
     required String content,
     required PostTypeEntity type,
     required List<String> tags,
-    List<Uint8List> mediaBytes = const [],
+    List<MediaAttachment> media = const [],
   }) async {
     final oldState = state;
     final currentPosts = state.value ?? [];
 
-    final resolvedType = type == PostTypeEntity.video
-        ? PostTypeEntity.video
-        : mediaBytes.length == 1
-            ? PostTypeEntity.image
-            : mediaBytes.length > 1
-                ? PostTypeEntity.multiImage
-                : type;
+    final resolvedType = resolvePostType(
+      totalMediaCount: media.length,
+      hasVideo: media.any((m) => m.isVideo),
+    );
 
     final optimisticPost = PostEntity(
       id: 'pending-${DateTime.now().millisecondsSinceEpoch}',
@@ -114,7 +111,7 @@ class OptimisticFeedNotifier
             content: content,
             type: type,
             tags: tags,
-            mediaBytes: mediaBytes,
+            media: media,
           );
       _loadedCommentPostIds.clear();
       await _loadPage(1);
@@ -328,7 +325,7 @@ class OptimisticFeedNotifier
     String content, {
     String? type,
     List<String> existingMediaIds = const [],
-    List<Uint8List> newMediaBytes = const [],
+    List<MediaAttachment> newMedia = const [],
   }) async {
     final oldState = state;
     final currentPosts = state.value;
@@ -345,7 +342,7 @@ class OptimisticFeedNotifier
             content,
             type: type,
             existingMediaIds: existingMediaIds,
-            newMediaBytes: newMediaBytes,
+            newMedia: newMedia,
           );
       _loadedCommentPostIds.clear();
       await _loadPage(1);

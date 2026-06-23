@@ -1,6 +1,6 @@
-import 'dart:typed_data';
 import 'package:feed_module/feed_module.dart';
 
+import '../entities/media_attachment.dart';
 import '../entities/post_entity.dart';
 import '../entities/comment_entity.dart';
 
@@ -14,7 +14,7 @@ abstract class PostRepository {
     required String content,
     required PostTypeEntity type,
     required List<String> tags,
-    List<Uint8List> mediaBytes,
+    List<MediaAttachment> media,
   });
 
   Future<void> toggleLike(String postId, bool currentlyLiked);
@@ -39,7 +39,7 @@ abstract class PostRepository {
     String content, {
     String? type,
     List<String> existingMediaIds,
-    List<Uint8List> newMediaBytes,
+    List<MediaAttachment> newMedia,
   });
 
   Future<void> deletePost(String postId);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/post.dart';
+import '../../utils/media_type_util.dart';
 import 'image_slider_preview.dart';
 import 'video_player_widget.dart';
 
@@ -7,6 +8,10 @@ class PostMedia extends StatelessWidget {
   final Post post;
 
   const PostMedia({super.key, required this.post});
+
+  List<String> get _mediaUrls => post.mediaUrls.isNotEmpty
+      ? post.mediaUrls
+      : (post.imageUrl != null ? [post.imageUrl!] : const []);
 
   void _openSlider(BuildContext context, List<String> urls, int index) {
     showDialog(
@@ -162,36 +167,39 @@ class PostMedia extends StatelessWidget {
     int index,
     BorderRadius borderRadius,
   ) {
+    final url = urls[index];
+    final Widget thumbnail = isVideoUrl(url)
+        ? Container(
+            color: Colors.black87,
+            alignment: Alignment.center,
+            child: const Icon(Icons.play_circle_fill,
+                color: Colors.white, size: 40),
+          )
+        : Image.network(
+            url,
+            fit: BoxFit.cover,
+            webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
+            width: double.infinity,
+            height: double.infinity,
+            errorBuilder: (_, __, ___) => Container(color: Colors.grey[300]),
+          );
+
     return GestureDetector(
       onTap: () => _openSlider(context, urls, index),
       child: ClipRRect(
         borderRadius: borderRadius,
-        child: Image.network(
-          urls[index],
-          fit: BoxFit.cover,
-          webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
-          width: double.infinity,
-          height: double.infinity,
-          errorBuilder: (_, __, ___) => Container(color: Colors.grey[300]),
-        ),
+        child: thumbnail,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (post.type == PostType.image &&
-        post.imageUrl != null &&
-        post.mediaUrls.isEmpty) {
-      return _buildSingleMedia(context, post.imageUrl!);
-    } else if (post.type == PostType.video && post.imageUrl != null) {
-      return _buildSingleMedia(context, post.imageUrl!, isVideo: true);
-    } else if (post.mediaUrls.isNotEmpty) {
-      if (post.mediaUrls.length == 1) {
-        return _buildSingleMedia(context, post.mediaUrls.first);
-      }
-      return _buildMediaGrid(context, post.mediaUrls);
+    final urls = _mediaUrls;
+    if (urls.isEmpty) return const SizedBox.shrink();
+    if (urls.length == 1) {
+      return _buildSingleMedia(context, urls.first, isVideo: isVideoUrl(urls.first));
     }
-    return const SizedBox.shrink();
+    return _buildMediaGrid(context, urls);
   }
 }

@@ -1,5 +1,7 @@
 import 'package:feed_module/src/utils/responsive_layout.dart';
 import 'package:flutter/material.dart';
+import '../../utils/media_type_util.dart';
+import 'video_player_widget.dart';
 
 class ImageSliderPreview extends StatefulWidget {
   final List<String> imageUrls;
@@ -86,6 +88,15 @@ class _ImageSliderPreviewState extends State<ImageSliderPreview> {
                   setState(() => _currentIndex = index);
                 },
                 itemBuilder: (context, index) {
+                  final url = widget.imageUrls[index];
+                  if (isVideoUrl(url)) {
+                    return Center(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: VideoPlayerWidget(url: url),
+                      ),
+                    );
+                  }
                   return InteractiveViewer(
                     minScale: 1.0,
                     maxScale: 4.0,
@@ -93,7 +104,7 @@ class _ImageSliderPreviewState extends State<ImageSliderPreview> {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: Image.network(
-                          widget.imageUrls[index],
+                          url,
                           fit: BoxFit.contain,
                           webHtmlElementStrategy:
                               WebHtmlElementStrategy.prefer,

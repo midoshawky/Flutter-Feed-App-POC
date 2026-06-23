@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import '../../domain/entities/media_attachment.dart';
 import '../../domain/entities/post_entity.dart';
 import '../../domain/entities/comment_entity.dart';
 import '../../domain/repositories/post_repository.dart';
@@ -57,28 +57,23 @@ class PostRepositoryImpl implements PostRepository {
     required String content,
     required PostTypeEntity type,
     required List<String> tags,
-    List<Uint8List> mediaBytes = const [],
+    List<MediaAttachment> media = const [],
   }) async {
-    final isVideo = type == PostTypeEntity.video;
-
     // 1. Upload all media files in parallel to get their IDs
     final List<String> mediaIds = await Future.wait(
-      mediaBytes.asMap().entries.map((entry) {
-        final filename = isVideo
+      media.asMap().entries.map((entry) {
+        final filename = entry.value.isVideo
             ? 'media_${entry.key}.mp4'
             : 'media_${entry.key}.jpg';
-        return _datasource.uploadMedia(entry.value, filename);
+        return _datasource.uploadMedia(entry.value.bytes, filename);
       }),
     );
 
-    // 2. Resolve post type based on media presence, preserving video type
-    final resolvedType = isVideo
-        ? PostTypeEntity.video
-        : mediaIds.isEmpty
-            ? PostTypeEntity.text
-            : mediaIds.length == 1
-                ? PostTypeEntity.image
-                : PostTypeEntity.multiImage;
+    // 2. Resolve post type based on media presence
+    final resolvedType = resolvePostType(
+      totalMediaCount: mediaIds.length,
+      hasVideo: media.any((m) => m.isVideo),
+    );
 
     // 3. Create the post using the collected media IDs
     await _datasource.createPost(
@@ -127,17 +122,15 @@ class PostRepositoryImpl implements PostRepository {
     String content, {
     String? type,
     List<String> existingMediaIds = const [],
-    List<Uint8List> newMediaBytes = const [],
+    List<MediaAttachment> newMedia = const [],
   }) async {
-    final isVideo = type == 'video';
-
     // 1. Upload any newly attached media files in parallel to get their IDs
     final uploadedIds = await Future.wait(
-      newMediaBytes.asMap().entries.map((entry) {
-        final filename = isVideo
+      newMedia.asMap().entries.map((entry) {
+        final filename = entry.value.isVideo
             ? 'media_${entry.key}.mp4'
             : 'media_${entry.key}.jpg';
-        return _datasource.uploadMedia(entry.value, filename);
+        return _datasource.uploadMedia(entry.value.bytes, filename);
       }),
     );
 

@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/di_providers.dart';
@@ -38,6 +39,7 @@ class _ReportDialogState extends State<_ReportDialog> {
 
   static const _maxChars = 500;
   static const _minChars = 8;
+  String? _error;
 
   @override
   void initState() {
@@ -68,13 +70,17 @@ class _ReportDialogState extends State<_ReportDialog> {
           widget.type == ReportType.post ? 'Post reported' : 'Comment reported',
         );
       }
-    } catch (_) {
+    } on DioException catch (err) {
       if (mounted) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Failed to submit report. Please try again.')),
-        );
+        setState((){
+          _isLoading = false;
+          print(err.response?.data["message"]);
+          _error = err.response?.data["message"];
+        });
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   const SnackBar(
+        //       content: Text('Failed to submit report. Please try again.')),
+        // );
       }
     }
   }
@@ -139,10 +145,12 @@ class _ReportDialogState extends State<_ReportDialog> {
                   maxLength: _maxChars,
                   maxLines: null,
                   expands: true,
+                  
                   textAlignVertical: TextAlignVertical.top,
                   enabled: !_isLoading,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Describe the issue...',
+                    errorText: _error,
                     hintStyle: TextStyle(
                       fontSize: 14,
                       color: Color(0xFF787878),

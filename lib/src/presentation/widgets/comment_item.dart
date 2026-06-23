@@ -1,3 +1,4 @@
+import 'package:feed_module/src/presentation/widgets/delete_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -196,13 +197,7 @@ class _CommentItemState extends ConsumerState<CommentItem> {
                           ),
                           onSelected: (value) {
                             if (value == 'delete') {
-                              ref
-                                  .read(optimisticFeedProvider.notifier)
-                                  .deleteComment(
-                                    widget.postId,
-                                    widget.comment.id,
-                                  );
-                              showFeedSnackBar(context, 'Comment deleted');
+                              _showDeleteDialog(context,ref);
                             } else if (value == 'edit') {
                               setState(() {
                                 _isEditing = true;
@@ -541,4 +536,24 @@ class _CommentItemState extends ConsumerState<CommentItem> {
       ),
     );
   }
+
+   void _showDeleteDialog(BuildContext context, WidgetRef ref) {
+    showDeleteSheet(
+      context,
+      ref,
+      targetId: widget.postId,
+      type: DeleteDialogType.comment,
+      onAction: () {
+         Navigator.pop(context);
+        ref
+                                  .read(optimisticFeedProvider.notifier)
+                                  .deleteComment(
+                                    widget.postId,
+                                    widget.comment.id,
+                                  );
+                              showFeedSnackBar(context, 'Comment deleted');
+      },
+    );
+  }
+
 }

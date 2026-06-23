@@ -85,7 +85,8 @@ class _PostContentState extends State<PostContent> {
               ],
             ),
           ),
-        if (widget.post.type != PostType.text) PostMedia(post: widget.post),
+        if (widget.post.mediaUrls.isNotEmpty || widget.post.imageUrl != null)
+          PostMedia(post: widget.post),
       ],
     );
   }

@@ -7,12 +7,44 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fluttertagger/fluttertagger.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../data/models/post_dto.dart';
+import '../../domain/entities/media_attachment.dart';
 import '../../domain/entities/post_entity.dart';
+import '../../utils/media_type_util.dart';
 import '../providers/di_providers.dart';
 import '../providers/optimistic_feed_provider.dart';
 import '../../services/mock_data_service.dart';
 import 'feed_snackbar.dart';
 import 'user_avatar.dart';
+
+/// A single attached media entry, either already on the post being edited
+/// or newly picked by the user. Images and video share one ordered list so
+/// neither clears the other when attached.
+class _PendingMedia {
+  final String? existingId;
+  final String? existingUrl;
+  final Uint8List? bytes;
+  final XFile? videoFile;
+  final bool isVideo;
+
+  const _PendingMedia.existing({
+    required this.existingId,
+    required this.existingUrl,
+    required this.isVideo,
+  })  : bytes = null,
+        videoFile = null;
+
+  const _PendingMedia.newImage(this.bytes)
+      : existingId = null,
+        existingUrl = null,
+        videoFile = null,
+        isVideo = false;
+
+  const _PendingMedia.newVideo(this.videoFile)
+      : existingId = null,
+        existingUrl = null,
+        bytes = null,
+        isVideo = true;
+}
 
 class CreatePostCard extends ConsumerStatefulWidget {
   final Post? postToEdit;
@@ -28,15 +60,8 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
 
-  // Existing media URLs/IDs loaded from the post being edited (kept in sync by index)
-  final List<String> _existingMediaUrls = [];
-  final List<String> _existingMediaIds = [];
-
-  // Newly picked images as bytes (works on all platforms including web)
-  final List<Uint8List> _attachedMedia = [];
-
-  // A single picked video file (mutually exclusive with images)
-  XFile? _attachedVideo;
+  // Ordered list of existing + newly picked media (images and video together)
+  final List<_PendingMedia> _media = [];
 
   // Dummy tags
   final List<String> _tags = [
@@ -58,14 +83,19 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
     if (widget.postToEdit != null) {
       _controller.text = widget.postToEdit!.content;
       _isHasInput = widget.postToEdit!.content.isNotEmpty;
-      if (widget.postToEdit!.mediaUrls.isNotEmpty) {
-        _existingMediaUrls.addAll(widget.postToEdit!.mediaUrls);
-        _existingMediaIds.addAll(widget.postToEdit!.mediaIds);
-      } else if (widget.postToEdit!.imageUrl != null) {
-        _existingMediaUrls.add(widget.postToEdit!.imageUrl!);
-        if (widget.postToEdit!.mediaIds.isNotEmpty) {
-          _existingMediaIds.add(widget.postToEdit!.mediaIds.first);
-        }
+      final existingUrls = widget.postToEdit!.mediaUrls.isNotEmpty
+          ? widget.postToEdit!.mediaUrls
+          : (widget.postToEdit!.imageUrl != null
+              ? [widget.postToEdit!.imageUrl!]
+              : const <String>[]);
+      for (var i = 0; i < existingUrls.length; i++) {
+        _media.add(_PendingMedia.existing(
+          existingId: i < widget.postToEdit!.mediaIds.length
+              ? widget.postToEdit!.mediaIds[i]
+              : null,
+          existingUrl: existingUrls[i],
+          isVideo: isVideoUrl(existingUrls[i]),
+        ));
       }
     }
     _controller.addListener(() {
@@ -81,19 +111,8 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
     super.dispose();
   }
 
-  void _removeExistingMedia(int index) {
-    setState(() {
-      _existingMediaUrls.removeAt(index);
-      if (index < _existingMediaIds.length) _existingMediaIds.removeAt(index);
-    });
-  }
-
-  void _removeMedia(int index) {
-    setState(() => _attachedMedia.removeAt(index));
-  }
-
-  void _removeVideo() {
-    setState(() => _attachedVideo = null);
+  void _removeMediaAt(int index) {
+    setState(() => _media.removeAt(index));
   }
 
   Future<void> _pickImages() async {
@@ -102,8 +121,7 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
       // Read bytes upfront — works on web, iOS, Android, desktop
       final bytes = await Future.wait(picked.map((f) => f.readAsBytes()));
       setState(() {
-        _attachedVideo = null; // images and video are mutually exclusive
-        _attachedMedia.addAll(bytes);
+        _media.addAll(bytes.map((b) => _PendingMedia.newImage(b)));
       });
     }
   }
@@ -112,8 +130,9 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
     final picked = await _picker.pickVideo(source: ImageSource.gallery);
     if (picked != null) {
       setState(() {
-        _attachedMedia.clear(); // images and video are mutually exclusive
-        _attachedVideo = picked;
+        // Only one video per post — replace any previously picked video.
+        _media.removeWhere((m) => m.isVideo && m.existingId == null);
+        _media.add(_PendingMedia.newVideo(picked));
       });
     }
   }
@@ -136,17 +155,15 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
   }
 
   PostTypeEntity _resolveType() {
-    if (_attachedVideo != null) return PostTypeEntity.video;
-    final totalMedia = _existingMediaUrls.length + _attachedMedia.length;
-    if (totalMedia == 0) return PostTypeEntity.text;
-    if (totalMedia == 1) return PostTypeEntity.image;
-    return PostTypeEntity.multiImage;
+    return resolvePostType(
+      totalMediaCount: _media.length,
+      hasVideo: _media.any((m) => m.isVideo),
+    );
   }
 
   Future<void> _handlePost() async {
     final text = _controller.text.trim();
-    final totalMedia = _existingMediaUrls.length + _attachedMedia.length;
-    if (text.isEmpty && totalMedia == 0 && _attachedVideo == null) return;
+    if (text.isEmpty && _media.isEmpty) return;
 
     setState(() => _isLoading = true);
 
@@ -155,10 +172,22 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
       final userId = ref.read(currentUserIdProvider);
       final type = _resolveType();
 
-      List<Uint8List> allBytes = List.from(_attachedMedia);
-      if (_attachedVideo != null) {
-        final videoBytes = await _attachedVideo!.readAsBytes();
-        allBytes = [videoBytes];
+      final existingMediaIds = _media
+          .where((m) => m.existingId != null)
+          .map((m) => m.existingId!)
+          .toList();
+
+      final newMedia = <MediaAttachment>[];
+      for (final m in _media) {
+        if (m.existingId != null) continue;
+        if (m.videoFile != null) {
+          newMedia.add(MediaAttachment(
+            bytes: await m.videoFile!.readAsBytes(),
+            isVideo: true,
+          ));
+        } else if (m.bytes != null) {
+          newMedia.add(MediaAttachment(bytes: m.bytes!, isVideo: false));
+        }
       }
 
       if (widget.postToEdit != null) {
@@ -168,8 +197,8 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
               widget.postToEdit!.id,
               text,
               type: PostDto.typeToString(type),
-              existingMediaIds: _existingMediaIds,
-              newMediaBytes: allBytes,
+              existingMediaIds: existingMediaIds,
+              newMedia: newMedia,
             );
       } else {
         await ref
@@ -179,14 +208,13 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
               content: text,
               type: type,
               tags: tags,
-              mediaBytes: allBytes,
+              media: newMedia,
             );
       }
 
       // Success: Reset state
       _controller.clear();
-      _attachedMedia.clear();
-      _attachedVideo = null;
+      _media.clear();
       if (mounted) {
         if (Navigator.canPop(context)) {
           Navigator.pop(context);
@@ -379,70 +407,38 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
             ),
           ],
 
-          // ── Video preview ─────────────────────────────────────────────────
-          if (_attachedVideo != null) ...[
-            const SizedBox(height: 16),
-            Stack(
-              children: [
-                Container(
-                  width: 168,
-                  height: 168,
-                  decoration: BoxDecoration(
-                    color: Colors.black87,
-                    borderRadius: BorderRadius.circular(8.96),
-                    border: Border.all(color: const Color(0xFFDEDEDE), width: 0.76),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8.96),
-                    child: const Center(
-                      child: Icon(Icons.videocam, color: Colors.white, size: 48),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: GestureDetector(
-                    onTap: _isLoading ? null : _removeVideo,
-                    child: Container(
-                      width: 24,
-                      height: 24,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF343434),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.close, size: 14, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-
-          // ── Media attachment previews ─────────────────────────────────────
-          if (_existingMediaUrls.isNotEmpty || _attachedMedia.isNotEmpty) ...[
+          // ── Media attachment previews (images and video together) ─────────
+          if (_media.isNotEmpty) ...[
             const SizedBox(height: 16),
             SizedBox(
               height: 168,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: _existingMediaUrls.length + _attachedMedia.length,
+                itemCount: _media.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 8),
                 itemBuilder: (context, index) {
-                  final isExisting = index < _existingMediaUrls.length;
-                  final Widget image = isExisting
-                      ? Image.network(
-                          _existingMediaUrls[index],
-                          width: 168,
-                          height: 168,
-                          fit: BoxFit.cover,
+                  final item = _media[index];
+                  final Widget thumbnail = item.isVideo
+                      ? Container(
+                          color: Colors.black87,
+                          child: const Center(
+                            child: Icon(Icons.videocam,
+                                color: Colors.white, size: 48),
+                          ),
                         )
-                      : Image.memory(
-                          _attachedMedia[index - _existingMediaUrls.length],
-                          width: 168,
-                          height: 168,
-                          fit: BoxFit.cover,
-                        );
+                      : (item.existingUrl != null
+                          ? Image.network(
+                              item.existingUrl!,
+                              width: 168,
+                              height: 168,
+                              fit: BoxFit.cover,
+                            )
+                          : Image.memory(
+                              item.bytes!,
+                              width: 168,
+                              height: 168,
+                              fit: BoxFit.cover,
+                            ));
 
                   return Stack(
                     children: [
@@ -458,19 +454,15 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8.96),
-                          child: image,
+                          child: thumbnail,
                         ),
                       ),
                       Positioned(
                         top: 8,
                         right: 8,
                         child: GestureDetector(
-                          onTap: _isLoading
-                              ? null
-                              : () => isExisting
-                                  ? _removeExistingMedia(index)
-                                  : _removeMedia(
-                                      index - _existingMediaUrls.length),
+                          onTap:
+                              _isLoading ? null : () => _removeMediaAt(index),
                           child: Container(
                             width: 24,
                             height: 24,
@@ -567,11 +559,7 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
               )),
               const Spacer(),
               ElevatedButton(
-                onPressed: _isLoading ||
-                      (!_isHasInput &&
-                          _existingMediaUrls.isEmpty &&
-                          _attachedMedia.isEmpty &&
-                          _attachedVideo == null)
+                onPressed: _isLoading || (!_isHasInput && _media.isEmpty)
                   ? null
                   : _handlePost,
                 style: ElevatedButton.styleFrom(

@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import '../entities/media_attachment.dart';
 import '../repositories/post_repository.dart';
 
 class UpdatePostUseCase {
@@ -10,13 +10,13 @@ class UpdatePostUseCase {
     String content, {
     String? type,
     List<String> existingMediaIds = const [],
-    List<Uint8List> newMediaBytes = const [],
+    List<MediaAttachment> newMedia = const [],
   }) =>
       repository.updatePost(
         postId,
         content,
         type: type,
         existingMediaIds: existingMediaIds,
-        newMediaBytes: newMediaBytes,
+        newMedia: newMedia,
       );
 }

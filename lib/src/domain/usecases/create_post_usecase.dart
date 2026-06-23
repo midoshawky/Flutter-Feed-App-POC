@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import '../entities/media_attachment.dart';
 import '../entities/post_entity.dart';
 import '../repositories/post_repository.dart';
 
@@ -11,13 +11,13 @@ class CreatePostUseCase {
     required String content,
     required PostTypeEntity type,
     required List<String> tags,
-    List<Uint8List> mediaBytes = const [],
+    List<MediaAttachment> media = const [],
   }) =>
       repository.createPost(
         userId: userId,
         content: content,
         type: type,
         tags: tags,
-        mediaBytes: mediaBytes,
+        media: media,
       );
 }

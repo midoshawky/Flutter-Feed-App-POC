@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 
 void showFeedSnackBar(BuildContext context, String message) {
+  final windowWidth = MediaQuery.of(context).size.width;
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      behavior: SnackBarBehavior.floating,
+      behavior: windowWidth > 600  ? SnackBarBehavior.floating : SnackBarBehavior.fixed,
       padding: EdgeInsets.zero,
-      content: Container(
+      
+      content: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+        Container(
+          width: windowWidth > 600 ? 300 : windowWidth,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        
         decoration: BoxDecoration(
           color: const Color(0xFFF2FAF6),
           borderRadius: BorderRadius.circular(16),
@@ -42,7 +49,8 @@ void showFeedSnackBar(BuildContext context, String message) {
             ),
           ],
         ),
-      ),
+      )
+      ],),
     ),
   );
 }

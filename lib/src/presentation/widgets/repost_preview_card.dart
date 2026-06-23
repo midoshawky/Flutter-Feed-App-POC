@@ -195,7 +195,7 @@ class _RepostPreviewCardState extends ConsumerState<RepostPreviewCard> {
           ],
 
           // Media
-          if (post.type != PostType.text) ...[
+          if (post.mediaUrls.isNotEmpty || post.imageUrl != null) ...[
             const SizedBox(height: 8),
             PostMedia(post: post),
           ],

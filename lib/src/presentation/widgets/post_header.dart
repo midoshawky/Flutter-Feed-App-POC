@@ -1,4 +1,5 @@
 import 'package:feed_module/feed_module.dart';
+import 'package:feed_module/src/presentation/widgets/delete_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -26,100 +27,17 @@ class PostHeader extends ConsumerWidget {
     return 'now';
   }
 
-  void _showDeleteDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFFEBEB),
-                  shape: BoxShape.circle,
-                ),
-                child: SvgPicture.asset(
-                  'assets/icons/delete.svg',
-                  package: 'feed_module',
-                  colorFilter: const ColorFilter.mode(Color(0xFFF44336), BlendMode.srcIn),
-                  width: 32,
-                  height: 32,
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Delete Post?',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1F1F1F),
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Are you sure you want to delete this post? This action cannot be undone.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF787878),
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 32),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: const BorderSide(color: Color(0xFFDEDEDE)),
-                        ),
-                      ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          color: Color(0xFF1F1F1F),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        ref.read(optimisticFeedProvider.notifier).deletePost(post.id);
-                        Navigator.pop(context);
-                        showFeedSnackBar(context, 'Post deleted');
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF44336),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Delete',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+  void _showDeleteDialog(BuildContext context, WidgetRef ref, String targetId) {
+    showDeleteSheet(
+      context,
+      ref,
+      targetId: targetId,
+      type: DeleteDialogType.post,
+      onAction: () {
+         Navigator.pop(context);
+        ref.read(optimisticFeedProvider.notifier).deletePost(post.id);
+        showFeedSnackBar(context, 'Post deleted');
+      },
     );
   }
 
@@ -144,35 +62,35 @@ class PostHeader extends ConsumerWidget {
                 bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
               child: Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 12),
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFDEDEDE),
-                      borderRadius: BorderRadius.circular(2),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDEDEDE),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: CustomScrollView(
-                      controller: scrollController,
-                      slivers: [
-                        SliverFillRemaining(
-                          hasScrollBody: false,
-                          child: CreatePostCard(postToEdit: post),
-                        ),
-                      ],
+                    Expanded(
+                      child: CustomScrollView(
+                        controller: scrollController,
+                        slivers: [
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: CreatePostCard(postToEdit: post),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
             ),
           ),
         ),
@@ -184,15 +102,17 @@ class PostHeader extends ConsumerWidget {
           container: container,
           child: Dialog(
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16)),
-            insetPadding:
-                const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 40,
+              vertical: 24,
+            ),
             child: SizedBox(
               width: 600,
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxHeight:
-                      MediaQuery.of(dialogContext).size.height * 0.85,
+                  maxHeight: MediaQuery.of(dialogContext).size.height * 0.85,
                 ),
                 child: SingleChildScrollView(
                   child: CreatePostCard(postToEdit: post),
@@ -218,19 +138,23 @@ class PostHeader extends ConsumerWidget {
         Stack(
           clipBehavior: Clip.none,
           children: [
-            UserAvatar(url: user.avatarUrl,name:user.name),
+            UserAvatar(url: user.avatarUrl, name: user.name),
             if (isMobile && !isCurrentUser)
               Positioned(
                 bottom: 0,
                 right: -4,
                 child: GestureDetector(
-                  onTap: () => ref.read(optimisticFeedProvider.notifier).toggleFollow(user.id, isFollowing),
+                  onTap: () => ref
+                      .read(optimisticFeedProvider.notifier)
+                      .toggleFollow(user.id, isFollowing),
                   child: Container(
                     width: 20,
                     height: 20,
-                    
+
                     decoration: BoxDecoration(
-                      color: isFollowing ? Colors.grey : const Color(0xFF4535C1),
+                      color: isFollowing
+                          ? Colors.grey
+                          : const Color(0xFF4535C1),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
@@ -258,15 +182,17 @@ class PostHeader extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                 Flexible(child: Text(
-                    user.name,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                      color: Color(0xFF333333),
+                  Flexible(
+                    child: Text(
+                      user.name,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        color: Color(0xFF333333),
+                      ),
                     ),
-                  ),),
+                  ),
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
@@ -300,7 +226,9 @@ class PostHeader extends ConsumerWidget {
           children: [
             if (!isMobile && !isCurrentUser)
               TextButton.icon(
-                onPressed: () => ref.read(optimisticFeedProvider.notifier).toggleFollow(user.id, isFollowing),
+                onPressed: () => ref
+                    .read(optimisticFeedProvider.notifier)
+                    .toggleFollow(user.id, isFollowing),
                 icon: Icon(
                   isFollowing ? Icons.check_rounded : Icons.add_rounded,
                   color: isFollowing ? Colors.grey : const Color(0xFF4535C1),
@@ -315,7 +243,10 @@ class PostHeader extends ConsumerWidget {
                   ),
                 ),
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 0,
+                  ),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
@@ -333,11 +264,16 @@ class PostHeader extends ConsumerWidget {
                     _showEditSheet(context, ref);
                     break;
                   case 'copy':
-                    Clipboard.setData(ClipboardData(text: 'https://dev-front-shuwier.pomac.info/timeline?postId=${post.id}'));
+                    Clipboard.setData(
+                      ClipboardData(
+                        text:
+                            'https://dev-front-shuwier.pomac.info/timeline?postId=${post.id}',
+                      ),
+                    );
                     showFeedSnackBar(context, 'Link copied to clipboard');
                     break;
                   case 'delete':
-                    _showDeleteDialog(context, ref);
+                    _showDeleteDialog(context, ref, post.id);
                     break;
                   case 'report':
                     showReportSheet(
@@ -364,7 +300,10 @@ class PostHeader extends ConsumerWidget {
                         const SizedBox(width: 12),
                         const Text(
                           'Edit',
-                          style: TextStyle(fontSize: 14, color: Color(0xFF1F1F1F)),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF1F1F1F),
+                          ),
                         ),
                       ],
                     ),
@@ -383,7 +322,10 @@ class PostHeader extends ConsumerWidget {
                       const SizedBox(width: 12),
                       const Text(
                         'Copy link',
-                        style: TextStyle(fontSize: 14, color: Color(0xFF1F1F1F)),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF1F1F1F),
+                        ),
                       ),
                     ],
                   ),
@@ -402,7 +344,10 @@ class PostHeader extends ConsumerWidget {
                         const SizedBox(width: 12),
                         const Text(
                           'Delete',
-                          style: TextStyle(fontSize: 14, color: Color(0xFF1F1F1F)),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF1F1F1F),
+                          ),
                         ),
                       ],
                     ),
@@ -422,7 +367,10 @@ class PostHeader extends ConsumerWidget {
                         const SizedBox(width: 12),
                         const Text(
                           'Report',
-                          style: TextStyle(fontSize: 14, color: Color(0xFF1F1F1F)),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF1F1F1F),
+                          ),
                         ),
                       ],
                     ),
