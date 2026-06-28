@@ -58,7 +58,10 @@ class _PostCardState extends ConsumerState<PostCard> {
         .watch(optimisticFeedProvider.notifier)
         .isLoadingCommentsForPost(widget.post.id);
 
-                  return Column(
+                  return SafeArea(
+                    bottom: true,
+                    top: false,
+                    child: Column(
                     children: [
                       const SizedBox(height: 12),
                       Container(
@@ -148,7 +151,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                         ),
                       ),
                     ],
-                  );
+                  ));
                 },
               ),
             ),

@@ -265,7 +265,10 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
                 ),
               ],
       ),
-      child: Column(
+      child: SafeArea(
+        bottom: true,
+        top: false,
+        child:Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Header row: avatar + text field ──────────────────────────────
@@ -443,7 +446,7 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
                   return Stack(
                     children: [
                       Container(
-                        width: 168,
+                        width: 158,
                         height: 168,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8.96),
@@ -595,7 +598,7 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
             ],
           ),
         ],
-      ),
+      )),
     );
   }
 }
