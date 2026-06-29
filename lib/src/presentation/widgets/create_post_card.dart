@@ -54,11 +54,13 @@ class CreatePostCard extends ConsumerStatefulWidget {
   ConsumerState<CreatePostCard> createState() => _CreatePostCardState();
 }
 
-class _CreatePostCardState extends ConsumerState<CreatePostCard> {
+class _CreatePostCardState extends ConsumerState<CreatePostCard> with AutomaticKeepAliveClientMixin {
   late final FlutterTaggerController _controller;
   final int _maxLength = 2000;
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
+
+  final ScrollController attachmentsController = ScrollController();
 
   // Ordered list of existing + newly picked media (images and video together)
   final List<_PendingMedia> _media = [];
@@ -415,7 +417,11 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
             const SizedBox(height: 16),
             SizedBox(
               height: 168,
-              child: ListView.separated(
+              width: double.infinity,
+              child: Scrollbar(
+                controller: attachmentsController,
+                child:  ListView.separated(
+                  controller: attachmentsController,
                 scrollDirection: Axis.horizontal,
                 itemCount: _media.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 8),
@@ -484,7 +490,7 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
                     ],
                   );
                 },
-              ),
+              )),
             ),
           ],
 
@@ -601,4 +607,7 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> {
       )),
     );
   }
+  
+  @override
+  bool get wantKeepAlive => true;
 }

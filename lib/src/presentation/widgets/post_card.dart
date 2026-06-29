@@ -163,7 +163,6 @@ class _PostCardState extends ConsumerState<PostCard> {
 
   @override
   Widget build(BuildContext context) {
-    print("widget.post: ${widget.post.mediaUrls}");
     final user =
         widget.post.user ?? MockDataService.getUserById(widget.post.userId);
     final isMobile = ResponsiveLayout.isMobile(context);
