@@ -98,7 +98,7 @@ class _ReportDialogState extends State<_ReportDialog> {
         constraints: const BoxConstraints(maxWidth: 494),
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Column(
+          child: SingleChildScrollView(child:Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -107,18 +107,13 @@ class _ReportDialogState extends State<_ReportDialog> {
                 alignment: Alignment.centerRight,
                 child: GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
-                  child: Transform.rotate(
-                    angle: 0.785398, // 45 degrees in radians
-                    child: const Icon(
-                      Icons.add,
+                  child: const Icon(
+                      Icons.close,
                       size: 18,
                       color: Color(0xFF1F1F1F),
                     ),
-                  ),
                 ),
               ),
-              const SizedBox(height: 8),
-              // ── Title ───────────────────────────────────────────────────
               const Text(
                 'Report an issue',
                 textAlign: TextAlign.center,
@@ -133,7 +128,7 @@ class _ReportDialogState extends State<_ReportDialog> {
               const SizedBox(height: 24),
               // ── Textarea ────────────────────────────────────────────────
               Container(
-                height: 186,
+                height: 160,
                 decoration: BoxDecoration(
                   border: Border.all(color: const Color(0xFFE1E1E1)),
                   borderRadius: BorderRadius.circular(16),
@@ -246,7 +241,7 @@ class _ReportDialogState extends State<_ReportDialog> {
                 ],
               ),
             ],
-          ),
+          )),
         ),
       ),
     );

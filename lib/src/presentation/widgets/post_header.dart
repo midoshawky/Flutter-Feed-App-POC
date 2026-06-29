@@ -34,7 +34,7 @@ class PostHeader extends ConsumerWidget {
       targetId: targetId,
       type: DeleteDialogType.post,
       onAction: () {
-         Navigator.pop(context);
+        Navigator.pop(context);
         ref.read(optimisticFeedProvider.notifier).deletePost(post.id);
         showFeedSnackBar(context, 'Post deleted');
       },
@@ -50,12 +50,13 @@ class PostHeader extends ConsumerWidget {
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
+
         backgroundColor: Colors.transparent,
         builder: (context) => UncontrolledProviderScope(
           container: container,
           child: DraggableScrollableSheet(
-            initialChildSize: 0.5,
-            minChildSize: 0.5,
+            initialChildSize: 0.8,
+            minChildSize: 0.8,
             maxChildSize: 0.95,
             builder: (context, scrollController) => Padding(
               padding: EdgeInsets.only(

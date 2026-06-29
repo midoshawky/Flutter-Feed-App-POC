@@ -16,6 +16,7 @@ void showRepostDialog(BuildContext context, WidgetRef ref, Post post) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      
       backgroundColor: Colors.transparent,
       builder: (ctx) => UncontrolledProviderScope(
         container: container,
