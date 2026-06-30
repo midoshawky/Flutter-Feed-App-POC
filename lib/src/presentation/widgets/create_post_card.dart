@@ -441,6 +441,15 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> with AutomaticK
                               width: 168,
                               height: 168,
                               fit: BoxFit.cover,
+                              webHtmlElementStrategy:
+                                  WebHtmlElementStrategy.prefer,
+                              errorBuilder: (_, __, ___) => Container(
+                                width: 168,
+                                height: 168,
+                                color: Colors.grey[300],
+                                child: const Icon(Icons.error,
+                                    color: Colors.grey),
+                              ),
                             )
                           : Image.memory(
                               item.bytes!,
