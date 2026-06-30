@@ -6,11 +6,10 @@ import 'di_providers.dart';
 
 final optimisticFeedProvider =
     NotifierProvider<OptimisticFeedNotifier, AsyncValue<List<PostEntity>>>(() {
-  return OptimisticFeedNotifier();
-});
+      return OptimisticFeedNotifier();
+    });
 
-class OptimisticFeedNotifier
-    extends Notifier<AsyncValue<List<PostEntity>>> {
+class OptimisticFeedNotifier extends Notifier<AsyncValue<List<PostEntity>>> {
   int _currentPage = 1;
   bool _hasMore = true;
   bool _isLoadingMore = false;
@@ -34,8 +33,9 @@ class OptimisticFeedNotifier
   Future<void> _loadPage(int page) async {
     try {
       final postId = ref.read(postIdProvider);
-      final userId =
-          ref.read(myFeedProvider) ? ref.read(currentUserIdProvider) : null;
+      final userId = ref.read(myFeedProvider)
+          ? ref.read(currentUserIdProvider)
+          : null;
       final posts = await ref
           .read(getFeedUseCaseProvider)
           .call(page: page, limit: 10, userId: userId, postId: postId);
@@ -61,8 +61,9 @@ class OptimisticFeedNotifier
     if (_loadedCommentPostIds.contains(postId)) return;
     _loadingCommentPostIds.add(postId);
     try {
-      final comments =
-          await ref.read(getPostCommentsUseCaseProvider).call(postId);
+      final comments = await ref
+          .read(getPostCommentsUseCaseProvider)
+          .call(postId);
       _loadingCommentPostIds.remove(postId);
       _loadedCommentPostIds.add(postId); // mark loaded only after success
       final posts = state.value;
@@ -109,7 +110,9 @@ class OptimisticFeedNotifier
     state = AsyncValue.data([optimisticPost, ...currentPosts]);
 
     try {
-      await ref.read(createPostUseCaseProvider).call(
+      await ref
+          .read(createPostUseCaseProvider)
+          .call(
             userId: userId,
             content: content,
             type: type,
@@ -134,8 +137,9 @@ class OptimisticFeedNotifier
       for (final post in currentPosts)
         if (post.id == postId)
           post.copyWith(
-            likesCount:
-                currentlyLiked ? post.likesCount - 1 : post.likesCount + 1,
+            likesCount: currentlyLiked
+                ? post.likesCount - 1
+                : post.likesCount + 1,
             isLiked: !currentlyLiked,
           )
         else
@@ -165,7 +169,9 @@ class OptimisticFeedNotifier
     ]);
 
     try {
-      final serverComment = await ref.read(addCommentUseCaseProvider).call(postId, comment);
+      final serverComment = await ref
+          .read(addCommentUseCaseProvider)
+          .call(postId, comment);
       // Preserve local user data when the API response omits the user object
       final resolved = serverComment.userName.isEmpty
           ? serverComment.copyWith(
@@ -198,7 +204,10 @@ class OptimisticFeedNotifier
 
   /// Optimistically add a reply
   Future<void> addReply(
-      String postId, String parentCommentId, CommentEntity reply) async {
+    String postId,
+    String parentCommentId,
+    CommentEntity reply,
+  ) async {
     final oldState = state;
     final currentPosts = state.value;
     if (currentPosts == null) return;
@@ -207,19 +216,20 @@ class OptimisticFeedNotifier
       for (final post in currentPosts)
         if (post.id == postId)
           post.copyWith(
-            comments:
-                _addReplyToComments(post.comments, parentCommentId, reply),
+            comments: _addReplyToComments(
+              post.comments,
+              parentCommentId,
+              reply,
+            ),
           )
         else
           post,
     ]);
 
     try {
-      final serverReply = await ref.read(addReplyUseCaseProvider).call(
-            postId: postId,
-            parentCommentId: parentCommentId,
-            reply: reply,
-          );
+      final serverReply = await ref
+          .read(addReplyUseCaseProvider)
+          .call(postId: postId, parentCommentId: parentCommentId, reply: reply);
       // Preserve local user data when the API response omits the user object
       final resolved = serverReply.userName.isEmpty
           ? serverReply.copyWith(
@@ -233,7 +243,11 @@ class OptimisticFeedNotifier
         for (final post in latestPosts)
           if (post.id == postId)
             post.copyWith(
-              comments: _replaceReplyInComments(post.comments, reply.id, resolved),
+              comments: _replaceReplyInComments(
+                post.comments,
+                reply.id,
+                resolved,
+              ),
             )
           else
             post,
@@ -254,8 +268,7 @@ class OptimisticFeedNotifier
         if (c.id == parentId)
           c.copyWith(replies: [...c.replies, reply])
         else
-          c.copyWith(
-              replies: _addReplyToComments(c.replies, parentId, reply)),
+          c.copyWith(replies: _addReplyToComments(c.replies, parentId, reply)),
     ];
   }
 
@@ -270,7 +283,8 @@ class OptimisticFeedNotifier
           replacement
         else
           c.copyWith(
-              replies: _replaceReplyInComments(c.replies, targetId, replacement)),
+            replies: _replaceReplyInComments(c.replies, targetId, replacement),
+          ),
     ];
   }
 
@@ -291,6 +305,7 @@ class OptimisticFeedNotifier
       content: addedText,
       type: PostTypeEntity.text,
       timestamp: DateTime.now(),
+      repostedFromId: originalPostId,
       repostedFrom: originalPost,
       likesCount: 0,
       repostsCount: 0,
@@ -308,7 +323,9 @@ class OptimisticFeedNotifier
     ]);
 
     try {
-      await ref.read(repostUseCaseProvider).call(
+      await ref
+          .read(repostUseCaseProvider)
+          .call(
             byUserId: byUserId,
             originalPostId: originalPostId,
             addedText: addedText,
@@ -340,7 +357,9 @@ class OptimisticFeedNotifier
     ]);
 
     try {
-      await ref.read(updatePostUseCaseProvider).call(
+      await ref
+          .read(updatePostUseCaseProvider)
+          .call(
             postId,
             content,
             type: type,
@@ -382,9 +401,7 @@ class OptimisticFeedNotifier
     state = AsyncValue.data([
       for (final post in currentPosts)
         if (post.id == postId)
-          post.copyWith(
-            comments: _removeComment(post.comments, commentId),
-          )
+          post.copyWith(comments: _removeComment(post.comments, commentId))
         else
           post,
     ]);
@@ -410,7 +427,10 @@ class OptimisticFeedNotifier
 
   /// Optimistically update a comment's text (works for replies too)
   Future<void> updateComment(
-      String postId, String commentId, String newText) async {
+    String postId,
+    String commentId,
+    String newText,
+  ) async {
     final oldState = state;
     final currentPosts = state.value;
     if (currentPosts == null) return;
@@ -444,7 +464,8 @@ class OptimisticFeedNotifier
           c.copyWith(text: newText)
         else
           c.copyWith(
-              replies: _updateCommentText(c.replies, commentId, newText)),
+            replies: _updateCommentText(c.replies, commentId, newText),
+          ),
     ];
   }
 
@@ -470,8 +491,9 @@ class OptimisticFeedNotifier
               : post.user,
           repostedFrom: post.repostedFrom?.user?.id == userId
               ? post.repostedFrom?.copyWith(
-                  user: post.repostedFrom?.user
-                      ?.copyWith(isFollowing: !isFollowing),
+                  user: post.repostedFrom?.user?.copyWith(
+                    isFollowing: !isFollowing,
+                  ),
                 )
               : post.repostedFrom,
         ),

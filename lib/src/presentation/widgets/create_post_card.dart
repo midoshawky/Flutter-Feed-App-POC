@@ -30,20 +30,20 @@ class _PendingMedia {
     required this.existingId,
     required this.existingUrl,
     required this.isVideo,
-  })  : bytes = null,
-        videoFile = null;
+  }) : bytes = null,
+       videoFile = null;
 
   const _PendingMedia.newImage(this.bytes)
-      : existingId = null,
-        existingUrl = null,
-        videoFile = null,
-        isVideo = false;
+    : existingId = null,
+      existingUrl = null,
+      videoFile = null,
+      isVideo = false;
 
   const _PendingMedia.newVideo(this.videoFile)
-      : existingId = null,
-        existingUrl = null,
-        bytes = null,
-        isVideo = true;
+    : existingId = null,
+      existingUrl = null,
+      bytes = null,
+      isVideo = true;
 }
 
 class CreatePostCard extends ConsumerStatefulWidget {
@@ -54,7 +54,8 @@ class CreatePostCard extends ConsumerStatefulWidget {
   ConsumerState<CreatePostCard> createState() => _CreatePostCardState();
 }
 
-class _CreatePostCardState extends ConsumerState<CreatePostCard> with AutomaticKeepAliveClientMixin {
+class _CreatePostCardState extends ConsumerState<CreatePostCard>
+    with AutomaticKeepAliveClientMixin {
   late final FlutterTaggerController _controller;
   final int _maxLength = 2000;
   final ImagePicker _picker = ImagePicker();
@@ -88,16 +89,18 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> with AutomaticK
       final existingUrls = widget.postToEdit!.mediaUrls.isNotEmpty
           ? widget.postToEdit!.mediaUrls
           : (widget.postToEdit!.imageUrl != null
-              ? [widget.postToEdit!.imageUrl!]
-              : const <String>[]);
+                ? [widget.postToEdit!.imageUrl!]
+                : const <String>[]);
       for (var i = 0; i < existingUrls.length; i++) {
-        _media.add(_PendingMedia.existing(
-          existingId: i < widget.postToEdit!.mediaIds.length
-              ? widget.postToEdit!.mediaIds[i]
-              : null,
-          existingUrl: existingUrls[i],
-          isVideo: isVideoUrl(existingUrls[i]),
-        ));
+        _media.add(
+          _PendingMedia.existing(
+            existingId: i < widget.postToEdit!.mediaIds.length
+                ? widget.postToEdit!.mediaIds[i]
+                : null,
+            existingUrl: existingUrls[i],
+            isVideo: isVideoUrl(existingUrls[i]),
+          ),
+        );
       }
     }
     _controller.addListener(() {
@@ -183,10 +186,12 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> with AutomaticK
       for (final m in _media) {
         if (m.existingId != null) continue;
         if (m.videoFile != null) {
-          newMedia.add(MediaAttachment(
-            bytes: await m.videoFile!.readAsBytes(),
-            isVideo: true,
-          ));
+          newMedia.add(
+            MediaAttachment(
+              bytes: await m.videoFile!.readAsBytes(),
+              isVideo: true,
+            ),
+          );
         } else if (m.bytes != null) {
           newMedia.add(MediaAttachment(bytes: m.bytes!, isVideo: false));
         }
@@ -270,353 +275,383 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard> with AutomaticK
       child: SafeArea(
         bottom: true,
         top: false,
-        child:Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Header row: avatar + text field ──────────────────────────────
-          Builder(
-            builder: (context) {
-              final taggerChild = FlutterTagger(
-                controller: _controller,
-                onSearch: _onSearch,
-                overlay: const SizedBox.shrink(),
-                triggerCharacterAndStyles: const {
-                  '#': TextStyle(
-                    color: Color(0xFF4535C1),
-                    fontWeight: FontWeight.w500,
-                  ),
-                },
-                builder: (context, textFieldKey) {
-                  return TextField(
-                    key: textFieldKey,
-                    controller: _controller,
-                    maxLines: null,
-                    expands: isMobile,
-                    textAlignVertical: TextAlignVertical.top,
-                    enabled: !_isLoading,
-                    onChanged: (val) => setState(() {}),
-                    maxLength: _maxLength,
-                    buildCounter:
-                        (
-                          context, {
-                          required currentLength,
-                          required isFocused,
-                          maxLength,
-                        }) => null,
-                    decoration: InputDecoration(
-                      hintText:
-                          "What are you working on, ${currentUser.split(' ')[0]}?",
-                      hintStyle: TextStyle(
-                        fontSize: 20,
-                        color: const Color(0xFF787878),
-                      ),
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header row: avatar + text field ──────────────────────────────
+            Builder(
+              builder: (context) {
+                final taggerChild = FlutterTagger(
+                  controller: _controller,
+                  onSearch: _onSearch,
+                  overlay: const SizedBox.shrink(),
+                  triggerCharacterAndStyles: const {
+                    '#': TextStyle(
+                      color: Color(0xFF4535C1),
+                      fontWeight: FontWeight.w500,
                     ),
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: const Color(0xFF1F1F1F),
-                      height: 1.5,
-                    ),
-                  );
-                },
-              );
-
-              final rowChild = Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  UserAvatar(url: currentUserAvatar ?? '', name: currentUser),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        if (isMobile)
-                          Expanded(child: taggerChild)
-                        else
-                          taggerChild,
-                        const SizedBox(height: 4),
-                        Text(
-                          '${_maxLength - _controller.text.length} characters left',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: const Color(0xFF787878),
-                          ),
+                  },
+                  builder: (context, textFieldKey) {
+                    return TextField(
+                      key: textFieldKey,
+                      controller: _controller,
+                      maxLines: null,
+                      expands: isMobile,
+                      textAlignVertical: TextAlignVertical.top,
+                      enabled: !_isLoading,
+                      onChanged: (val) => setState(() {}),
+                      maxLength: _maxLength,
+                      buildCounter:
+                          (
+                            context, {
+                            required currentLength,
+                            required isFocused,
+                            maxLength,
+                          }) => null,
+                      decoration: InputDecoration(
+                        hintText:
+                            "What are you working on, ${currentUser.split(' ')[0]}?",
+                        hintStyle: TextStyle(
+                          fontSize: 20,
+                          color: const Color(0xFF787878),
                         ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-
-              return isMobile ? Expanded(child: rowChild) : rowChild;
-            },
-          ),
-
-          // ── Inline tag suggestions ───────────────────────────────────────
-          if (_isSearching && _filteredTags.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Container(
-              constraints: const BoxConstraints(maxHeight: 150),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFDEDEDE)),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color.fromRGBO(0, 0, 0, 0.08),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: ListView.builder(
-                shrinkWrap: true,
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                itemCount: _filteredTags.length,
-                itemBuilder: (context, index) {
-                  final tag = _filteredTags[index];
-                  return InkWell(
-                    onTap: () {
-                      _controller.addTag(id: tag, name: tag);
-                      _hideOverlay();
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
                       ),
-                      child: Row(
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: const Color(0xFF1F1F1F),
+                        height: 1.5,
+                      ),
+                    );
+                  },
+                );
+
+                final rowChild = Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    UserAvatar(url: currentUserAvatar ?? '', name: currentUser),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          const Icon(
-                            Icons.tag,
-                            size: 16,
-                            color: Color(0xFF4535C1),
-                          ),
-                          const SizedBox(width: 6),
+                          if (isMobile)
+                            Expanded(child: taggerChild)
+                          else
+                            taggerChild,
+                          const SizedBox(height: 4),
                           Text(
-                            '#$tag',
+                            '${_maxLength - _controller.text.length} characters left',
                             style: TextStyle(
-                              fontSize: 15,
-                              color: const Color(0xFF4535C1),
-                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                              color: const Color(0xFF787878),
                             ),
                           ),
                         ],
                       ),
                     ),
-                  );
-                },
-              ),
+                  ],
+                );
+
+                return isMobile ? Expanded(child: rowChild) : rowChild;
+              },
             ),
-          ],
 
-          // ── Media attachment previews (images and video together) ─────────
-          if (_media.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 168,
-              width: double.infinity,
-              child: Scrollbar(
-                controller: attachmentsController,
-                child:  ListView.separated(
-                  controller: attachmentsController,
-                scrollDirection: Axis.horizontal,
-                itemCount: _media.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final item = _media[index];
-                  final Widget thumbnail = item.isVideo
-                      ? Container(
-                          color: Colors.black87,
-                          child: const Center(
-                            child: Icon(Icons.videocam,
-                                color: Colors.white, size: 48),
-                          ),
-                        )
-                      : (item.existingUrl != null
-                          ? Image.network(
-                              item.existingUrl!,
-                              width: 168,
-                              height: 168,
-                              fit: BoxFit.cover,
-                              webHtmlElementStrategy:
-                                  WebHtmlElementStrategy.prefer,
-                              errorBuilder: (_, __, ___) => Container(
-                                width: 168,
-                                height: 168,
-                                color: Colors.grey[300],
-                                child: const Icon(Icons.error,
-                                    color: Colors.grey),
-                              ),
-                            )
-                          : Image.memory(
-                              item.bytes!,
-                              width: 168,
-                              height: 168,
-                              fit: BoxFit.cover,
-                            ));
-
-                  return Stack(
-                    children: [
-                      Container(
-                        width: 158,
-                        height: 168,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8.96),
-                          border: Border.all(
-                            color: const Color(0xFFDEDEDE),
-                            width: 0.76,
-                          ),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8.96),
-                          child: thumbnail,
-                        ),
-                      ),
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: GestureDetector(
-                          onTap:
-                              _isLoading ? null : () => _removeMediaAt(index),
-                          child: Container(
-                            width: 24,
-                            height: 24,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF343434),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.close,
-                              size: 14,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              )),
-            ),
-          ],
-
-          // ── Bottom action bar ─────────────────────────────────────────────
-          if (isMobile) ...[
-            const SizedBox(height: 16),
-            const Divider(color: Color(0xFFDEDEDE), thickness: 1, height: 1),
-          ],
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Tooltip(
-                message: "Add an image or video",
-                preferBelow: false,
-                verticalOffset: 20,
-                padding: EdgeInsets.all(12),
-                textStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  fontStyle: FontStyle.normal,
-                  height: 1.42,
-                  letterSpacing: 0,
-                  color: Color(0xFF343434),
-                ),
+            // ── Inline tag suggestions ───────────────────────────────────────
+            if (_isSearching && _filteredTags.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Container(
+                constraints: const BoxConstraints(maxHeight: 150),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
+                  border: Border.all(color: const Color(0xFFDEDEDE)),
+                  boxShadow: const [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+                      color: Color.fromRGBO(0, 0, 0, 0.08),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
                     ),
                   ],
-                ),child:
-              PopupMenuButton<String>(
-                enabled: !_isLoading,
-                tooltip: "",
-                position: PopupMenuPosition.over,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
                 ),
-                onSelected: (value) {
-                  if (value == 'photo') _pickImages();
-                  if (value == 'video') _pickVideo();
-                },
-                itemBuilder: (_) => [
-                  PopupMenuItem<String>(
-                    value: 'photo',
-                    child: Row(
-                      children: const [
-                        Icon(Icons.image_outlined, color: Color(0xFF787878), size: 20),
-                        SizedBox(width: 8),
-                        Text('Photo', style: TextStyle(fontSize: 14, color: Color(0xFF1F1F1F))),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem<String>(
-                    value: 'video',
-                    child: Row(
-                      children: const [
-                        Icon(Icons.videocam_outlined, color: Color(0xFF787878), size: 20),
-                        SizedBox(width: 8),
-                        Text('Video', style: TextStyle(fontSize: 14, color: Color(0xFF1F1F1F))),
-                      ],
-                    ),
-                  ),
-                ],
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                child: SvgPicture.asset(
-                  'assets/icons/image.svg',
-                  package: 'feed_module',
-                ),
-              )),
-              const Spacer(),
-              ElevatedButton(
-                onPressed: _isLoading || (!_isHasInput && _media.isEmpty)
-                  ? null
-                  : _handlePost,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4535C1),
-                  foregroundColor: const Color(0xFFF5F5F5),
-                  minimumSize: const Size(80, 48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 8,
-                  ),
-                  elevation: 0,
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  itemCount: _filteredTags.length,
+                  itemBuilder: (context, index) {
+                    final tag = _filteredTags[index];
+                    return InkWell(
+                      onTap: () {
+                        _controller.addTag(id: tag, name: tag);
+                        _hideOverlay();
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
                         ),
-                      )
-                    : Text(
-                        widget.postToEdit != null ? 'Save' : 'Post',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.tag,
+                              size: 16,
+                              color: Color(0xFF4535C1),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '#$tag',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: const Color(0xFF4535C1),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                    );
+                  },
+                ),
               ),
             ],
-          ),
-        ],
-      )),
+
+            // ── Media attachment previews (images and video together) ─────────
+            if (_media.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 168,
+                width: double.infinity,
+                child: Scrollbar(
+                  controller: attachmentsController,
+                  child: ListView.separated(
+                    controller: attachmentsController,
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _media.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final item = _media[index];
+                      final Widget thumbnail = item.isVideo
+                          ? Container(
+                              color: Colors.black87,
+                              child: const Center(
+                                child: Icon(
+                                  Icons.videocam,
+                                  color: Colors.white,
+                                  size: 48,
+                                ),
+                              ),
+                            )
+                          : (item.existingUrl != null
+                                ? Image.network(
+                                    item.existingUrl!,
+                                    width: 168,
+                                    height: 168,
+                                    fit: BoxFit.cover,
+                                    webHtmlElementStrategy:
+                                        WebHtmlElementStrategy.prefer,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      width: 168,
+                                      height: 168,
+                                      color: Colors.grey[300],
+                                      child: const Icon(
+                                        Icons.error,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  )
+                                : Image.memory(
+                                    item.bytes!,
+                                    width: 168,
+                                    height: 168,
+                                    fit: BoxFit.cover,
+                                  ));
+
+                      return Stack(
+                        children: [
+                          Container(
+                            width: 158,
+                            height: 168,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8.96),
+                              border: Border.all(
+                                color: const Color(0xFFDEDEDE),
+                                width: 0.76,
+                              ),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8.96),
+                              child: thumbnail,
+                            ),
+                          ),
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: GestureDetector(
+                              onTap: _isLoading
+                                  ? null
+                                  : () => _removeMediaAt(index),
+                              child: Container(
+                                width: 24,
+                                height: 24,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF343434),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+
+            // ── Bottom action bar ─────────────────────────────────────────────
+            if (isMobile) ...[
+              const SizedBox(height: 16),
+              const Divider(color: Color(0xFFDEDEDE), thickness: 1, height: 1),
+            ],
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                if (widget.postToEdit?.repostedFromId == null)
+                  Tooltip(
+                    message: "Add an image or video",
+                    preferBelow: false,
+                    verticalOffset: 20,
+                    padding: EdgeInsets.all(12),
+                    textStyle: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      fontStyle: FontStyle.normal,
+                      height: 1.42,
+                      letterSpacing: 0,
+                      color: Color(0xFF343434),
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: PopupMenuButton<String>(
+                      enabled: !_isLoading,
+                      tooltip: "",
+                      position: PopupMenuPosition.over,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      onSelected: (value) {
+                        if (value == 'photo') _pickImages();
+                        if (value == 'video') _pickVideo();
+                      },
+                      itemBuilder: (_) => [
+                        PopupMenuItem<String>(
+                          value: 'photo',
+                          child: Row(
+                            children: const [
+                              Icon(
+                                Icons.image_outlined,
+                                color: Color(0xFF787878),
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Photo',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF1F1F1F),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem<String>(
+                          value: 'video',
+                          child: Row(
+                            children: const [
+                              Icon(
+                                Icons.videocam_outlined,
+                                color: Color(0xFF787878),
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Video',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF1F1F1F),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      child: SvgPicture.asset(
+                        'assets/icons/image.svg',
+                        package: 'feed_module',
+                      ),
+                    ),
+                  ),
+                const Spacer(),
+                ElevatedButton(
+                  onPressed: _isLoading || (!_isHasInput && _media.isEmpty)
+                      ? null
+                      : _handlePost,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4535C1),
+                    foregroundColor: const Color(0xFFF5F5F5),
+                    minimumSize: const Size(80, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 8,
+                    ),
+                    elevation: 0,
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation(Colors.white),
+                          ),
+                        )
+                      : Text(
+                          widget.postToEdit != null ? 'Save' : 'Post',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
-  
+
   @override
   bool get wantKeepAlive => true;
 }

@@ -20,6 +20,7 @@ class PostEntity {
   final int commentsCount;
   final DateTime timestamp;
   final bool isLiked;
+  final String? repostedFromId;
   final PostEntity? repostedFrom;
   final UserEntity? user;
 
@@ -38,6 +39,7 @@ class PostEntity {
     this.commentsCount = 0,
     required this.timestamp,
     this.isLiked = false,
+    this.repostedFromId,
     this.repostedFrom,
     this.user,
   });
@@ -57,6 +59,7 @@ class PostEntity {
     int? commentsCount,
     DateTime? timestamp,
     bool? isLiked,
+    String? repostedFromId,
     PostEntity? repostedFrom,
     UserEntity? user,
   }) {
@@ -75,6 +78,7 @@ class PostEntity {
       commentsCount: commentsCount ?? this.commentsCount,
       timestamp: timestamp ?? this.timestamp,
       isLiked: isLiked ?? this.isLiked,
+      repostedFromId: repostedFromId ?? this.repostedFromId,
       repostedFrom: repostedFrom ?? this.repostedFrom,
       user: user ?? this.user,
     );
@@ -96,6 +100,7 @@ class PostEntity {
       commentsCount: commentsCount,
       timestamp: timestamp,
       isLiked: isLiked,
+      repostedFromId: repostedFromId,
       repostedFrom: (depth < 5 && repostedFrom != null)
           ? repostedFrom!.toLegacy(depth: depth + 1)
           : null,

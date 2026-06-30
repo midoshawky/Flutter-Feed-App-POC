@@ -155,6 +155,7 @@ class PostDto {
       commentsCount: commentsCount,
       timestamp: timestamp,
       isLiked: isLiked ?? this.isLiked,
+      repostedFromId: repostedFromId,
       repostedFrom: repostedFrom,
       user: userDto?.toEntity(),
     );

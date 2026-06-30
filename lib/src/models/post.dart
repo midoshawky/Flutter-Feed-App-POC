@@ -18,6 +18,7 @@ class Post {
   final int commentsCount;
   final DateTime timestamp;
   final bool isLiked;
+  final String? repostedFromId;
   final Post? repostedFrom;
   final User? user;
 
@@ -36,6 +37,7 @@ class Post {
     this.commentsCount = 0,
     required this.timestamp,
     this.isLiked = false,
+    this.repostedFromId,
     this.repostedFrom,
     this.user,
   }) : id = id ?? DateTime.now().millisecondsSinceEpoch.toString();
@@ -65,6 +67,7 @@ class Post {
       commentsCount: commentsCount ?? this.commentsCount,
       timestamp: timestamp,
       isLiked: isLiked ?? this.isLiked,
+      repostedFromId: repostedFromId,
       repostedFrom: repostedFrom ?? this.repostedFrom,
       user: user,
     );
