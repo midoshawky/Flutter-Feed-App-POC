@@ -21,7 +21,11 @@ void showRepostDialog(BuildContext context, WidgetRef ref, Post post) {
       builder: (ctx) => UncontrolledProviderScope(
         container: container,
         child: Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom == 0
+                ? MediaQuery.of(ctx).padding.bottom
+                : MediaQuery.of(ctx).viewInsets.bottom,
+          ),
           child: _RepostDialog(post: post),
         ),
       ),
@@ -53,6 +57,8 @@ class _RepostDialogState extends ConsumerState<_RepostDialog> {
   List<String> _filteredTags = [];
   bool _isSearching = false;
   bool _isLoading = false;
+
+  Post get _originalPost => widget.post.repostedFrom ?? widget.post;
 
   @override
   void initState() {
@@ -87,17 +93,17 @@ class _RepostDialogState extends ConsumerState<_RepostDialog> {
           .read(optimisticFeedProvider.notifier)
           .repost(
             byUserId: userId.isNotEmpty ? userId : '2',
-            originalPostId: widget.post.id,
+            originalPostId: _originalPost.id,
             addedText: _controller.text.trim(),
             originalPost: PostEntity(
-              id: widget.post.id,
-              userId: widget.post.userId,
-              content: widget.post.content,
-              imageUrl: widget.post.imageUrl,
-              mediaUrls: widget.post.mediaUrls,
-              tags: widget.post.tags,
-              type: PostTypeEntity.values[widget.post.type.index],
-              timestamp: widget.post.timestamp,
+              id: _originalPost.id,
+              userId: _originalPost.userId,
+              content: _originalPost.content,
+              imageUrl: _originalPost.imageUrl,
+              mediaUrls: _originalPost.mediaUrls,
+              tags: _originalPost.tags,
+              type: PostTypeEntity.values[_originalPost.type.index],
+              timestamp: _originalPost.timestamp,
             ),
           );
       if (mounted) Navigator.of(context).pop();
@@ -253,7 +259,7 @@ class _RepostDialogState extends ConsumerState<_RepostDialog> {
           ],
 
           const SizedBox(height: 16),
-          RepostPreviewCard(post: widget.post),
+          RepostPreviewCard(post: _originalPost),
           const SizedBox(height: 20),
           Align(
             alignment: Alignment.centerRight,
