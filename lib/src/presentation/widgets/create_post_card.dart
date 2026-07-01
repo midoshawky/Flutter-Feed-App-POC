@@ -14,6 +14,7 @@ import '../providers/di_providers.dart';
 import '../providers/optimistic_feed_provider.dart';
 import '../../services/mock_data_service.dart';
 import 'feed_snackbar.dart';
+import 'repost_preview_card.dart';
 import 'user_avatar.dart';
 
 /// A single attached media entry, either already on the post being edited
@@ -513,6 +514,12 @@ class _CreatePostCardState extends ConsumerState<CreatePostCard>
                   ),
                 ),
               ),
+            ],
+
+            // ── Embedded original post preview (editing a repost) ──────────────
+            if (widget.postToEdit?.repostedFrom != null) ...[
+              const SizedBox(height: 16),
+              RepostPreviewCard(post: widget.postToEdit!.repostedFrom!),
             ],
 
             // ── Bottom action bar ─────────────────────────────────────────────
