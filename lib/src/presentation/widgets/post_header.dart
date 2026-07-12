@@ -236,7 +236,7 @@ class PostHeader extends ConsumerWidget {
                   size: 20,
                 ),
                 label: Text(
-                  isFollowing ? 'Following' : 'Follow',
+                  isFollowing ? 'Following' : 'Make Follow',
                   style: TextStyle(
                     color: isFollowing ? Colors.grey : const Color(0xFF4535C1),
                     fontWeight: FontWeight.w600,
